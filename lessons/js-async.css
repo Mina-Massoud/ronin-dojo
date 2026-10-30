@@ -1,0 +1,101 @@
+/* lesson: js-async (prefix as-). Theme tokens only; light and dark both come from book.css. */
+
+/* ---------- 01 the pager ---------- */
+.as-pager { display: flex; align-items: center; gap: 16px; padding: 16px 18px; border-radius: 16px; background: var(--field); }
+.as-pager-face { position: relative; flex: none; width: 64px; height: 64px; border-radius: 50%; background: var(--panel); box-shadow: inset 0 0 0 5px var(--field-strong); transition: box-shadow var(--fast); }
+.as-pager-face::after { content: ""; position: absolute; inset: 0; display: grid; place-items: center; font: 700 26px var(--font); color: var(--ink); }
+.as-pager[data-state="pending"] .as-pager-face { animation: as-pulse 1.4s ease-in-out infinite; }
+.as-pager[data-state="fulfilled"] .as-pager-face { box-shadow: inset 0 0 0 5px var(--ok); }
+.as-pager[data-state="fulfilled"] .as-pager-face::after { content: "\2713"; color: var(--ok); }
+.as-pager[data-state="rejected"] .as-pager-face { box-shadow: inset 0 0 0 5px var(--danger); }
+.as-pager[data-state="rejected"] .as-pager-face::after { content: "\2715"; color: var(--danger); }
+.as-pager-text { display: grid; gap: 2px; min-width: 0; }
+.as-pager-state { font-size: 17px; color: var(--ink); }
+.as-pager-detail { font-size: 13.5px; color: var(--ink-muted); overflow-wrap: anywhere; }
+@keyframes as-pulse { 50% { box-shadow: inset 0 0 0 5px var(--ink-muted); } }
+@media (prefers-reduced-motion: reduce) { .as-pager[data-state="pending"] .as-pager-face { animation: none; } }
+
+/* ---------- shared bits ---------- */
+.as-codebox { min-width: 0; margin-top: 12px; }
+.as-codebox[hidden], .as-chips[hidden], .as-col[hidden], .as-lanerow[hidden] { display: none; }
+.as-hint { font-size: 13.5px; color: var(--ink-soft); max-width: 64ch; min-height: 1.4em; }
+.as-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; }
+.as-chips .label { margin-right: 2px; }
+.as-chips .label:not(:first-child) { margin-left: 10px; }
+.as-code, .as-comb-out, .step[id^="js-async-"] .code-block, .step[id^="js-async-"] .code-input, .step[id^="js-async-"] .code-hl { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }
+.as-code { padding-inline: 0; white-space: pre; }
+.as-ln { display: block; padding: 0 14px; border-radius: 5px; transition: background var(--fast), opacity var(--fast); }
+.as-code:has(.lit) .as-ln:not(.lit) { opacity: 0.55; }
+.as-ln.lit { background: var(--line-bar); opacity: 1; box-shadow: inset 3px 0 0 var(--syn-kw); }
+
+/* ---------- 03 the chain, as rows ---------- */
+.as-rows { display: grid; gap: 6px; }
+.as-row { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; background: var(--field); transition: background var(--fast), opacity var(--fast), box-shadow var(--fast); }
+.as-row.lit { background: var(--line-bar); box-shadow: inset 3px 0 0 var(--syn-kw); }
+.as-row.skipped .as-row-code { opacity: 0.5; text-decoration: line-through; }
+.as-row-name { font: 700 13px var(--font); color: var(--ink); }
+.as-row-code { font: 12.5px/1.5 var(--mono); color: var(--ink); overflow-wrap: anywhere; font-variant-ligatures: none; }
+.as-state { padding: 3px 10px; border-radius: 999px; font: 600 12px var(--font); background: var(--field-strong); color: var(--ink-muted); white-space: nowrap; }
+.as-state[data-state="fulfilled"] { background: color-mix(in srgb, var(--ok) 22%, var(--panel)); color: var(--ink); }
+.as-state[data-state="rejected"] { background: color-mix(in srgb, var(--danger) 20%, var(--panel)); color: var(--ink); }
+@media (max-width: 560px) { .as-row { grid-template-columns: 26px minmax(0, 1fr); } .as-state { grid-column: 2; justify-self: start; } }
+
+/* ---------- 04 the two versions ---------- */
+.as-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 760px) { .as-pair { grid-template-columns: minmax(0, 1fr); } }
+.as-col { display: grid; gap: 6px; min-width: 0; }
+.as-outs { display: grid; gap: 4px; margin-top: 10px; font-size: 13.5px; color: var(--ink-soft); }
+.as-outs p b { color: var(--ink); }
+
+/* ---------- 05 ticks ---------- */
+.as-tickbox { display: grid; gap: 6px; padding: 12px 14px; border-radius: 12px; background: var(--field); margin-bottom: 12px; }
+.as-dots { display: flex; flex-wrap: wrap; gap: 5px; min-height: 14px; }
+.as-dot { display: block; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); animation: fade-in 200ms var(--ease); }
+
+/* ---------- timelines (06, 09, hub cards) ---------- */
+.as-lanebox { display: grid; gap: 8px; margin-top: 12px; }
+.as-lanerow { display: grid; gap: 2px; }
+.as-lane { display: block; width: 100%; height: auto; }
+.as-bar { fill: var(--syn-fn); }
+.as-bar.done { fill: var(--ink); }
+.as-bar-plan { fill: none; stroke: var(--ink-muted); stroke-width: 1.2; stroke-dasharray: 3 3; }
+.as-total { stroke: var(--syn-kw); stroke-width: 2; stroke-dasharray: 4 3; }
+.as-key { fill: var(--ink); }
+.as-x { fill: none; stroke: var(--danger); stroke-width: 2; stroke-linecap: round; }
+.as-dot-ok { fill: var(--ok); }
+.as-dot-bad { fill: var(--danger); }
+.as-dot-ignored { fill: var(--ink-muted); }
+.as-bad { color: var(--danger); }
+
+/* ---------- hub cards ---------- */
+.as-comb { display: grid; gap: 8px; width: 100%; max-width: 340px; }
+.as-comb svg { display: block; width: 100%; height: auto; }
+.as-comb-run { display: grid; gap: 6px; justify-items: start; }
+.as-comb-out { font: 12.5px/1.5 var(--mono); color: var(--ink-soft); overflow-wrap: anywhere; }
+
+/* ---------- film items (SVG) ---------- */
+.as-box-pend { fill: var(--field); stroke: var(--ink-muted); stroke-width: 1.2; stroke-dasharray: 4 3; }
+.as-box-ok { fill: color-mix(in srgb, var(--ok) 20%, var(--panel)); stroke: var(--ok); stroke-width: 1.4; }
+.as-box-bad { fill: color-mix(in srgb, var(--danger) 18%, var(--panel)); stroke: var(--danger); stroke-width: 1.4; }
+.as-box-name { fill: var(--ink); font: 700 13px var(--font); }
+.as-box-state { fill: var(--ink-soft); font: 500 12.5px var(--font); }
+.as-table { fill: var(--field); stroke: var(--line-strong); stroke-width: 1.5; }
+.as-table-solid { fill: color-mix(in srgb, var(--ok) 22%, var(--panel)); stroke: var(--ok); stroke-width: 2; }
+.as-table-ghost { fill: color-mix(in srgb, var(--syn-num) 12%, var(--panel)); stroke: var(--syn-num); stroke-width: 2; stroke-dasharray: 5 4; }
+.as-t-id { fill: var(--ink); font: 700 14px var(--font); }
+.as-t-name { fill: var(--ink-soft); font: 500 12px var(--font); }
+.as-toast { fill: color-mix(in srgb, var(--danger) 18%, var(--panel)); stroke: var(--danger); stroke-width: 1.2; }
+.as-toast-t { fill: var(--ink); font: 600 12.5px var(--font); }
+
+/* ---------- text blocks ---------- */
+.as-excerpt { display: grid; gap: 8px; min-width: 0; }
+.as-excerpt > * { min-width: 0; }
+.as-note { font-size: 14px; color: var(--ink-soft); max-width: 68ch; }
+.as-note b { color: var(--ink); }
+.as-sub { margin: 18px 0 2px; font-size: 15px; font-weight: 600; color: var(--ink); }
+.as-out { font: 12.5px/1.5 var(--mono); color: var(--ink-soft); overflow-wrap: anywhere; }
+.as-out b { font-family: var(--font); color: var(--ink); }
+.as-rule { margin: 0; padding: 0; list-style: none; counter-reset: rule; display: grid; gap: 8px; }
+.as-rule li { counter-increment: rule; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: center; padding: 12px 14px; border-radius: 12px; background: var(--field); font-size: 15px; color: var(--ink-soft); }
+.as-rule li::before { content: counter(rule); display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: var(--panel); font: 600 13px var(--font); }
+.as-rule b { color: var(--ink); }

@@ -1,0 +1,90 @@
+/* lesson: ts-generics (prefix tg-; theme tokens only, so light and dark both work) */
+
+/* ---------- code with numbered lines, hints and error marks ---------- */
+.tg-pair { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 640px) { .tg-pair { grid-template-columns: minmax(0, 1fr); } }
+.tg-codebox, .tg-side { display: grid; gap: 10px; min-width: 0; }
+.tg-code, .tg-block, .tg-out { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }
+.tg-code { padding-inline: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.tg-ln { display: block; padding: 0 12px 0 40px; position: relative; border-radius: 5px; transition: background var(--fast), opacity var(--fast); }
+.tg-ln::before { content: attr(data-n); position: absolute; left: 0; width: 28px; text-align: right; color: var(--ink-muted); font-size: 12px; }
+.tg-ln[tabindex] { cursor: pointer; }
+.tg-ln[tabindex]:hover { background: var(--line-bar); }
+.tg-ln.dim { opacity: 0.45; }
+.tg-ln.bad { background: color-mix(in srgb, var(--danger) 14%, transparent); box-shadow: inset 3px 0 0 var(--danger); }
+.tg-hint { margin-left: 10px; padding: 0 7px; border-radius: 6px; background: var(--field-strong); color: var(--ink-soft); font: 500 12px var(--mono); white-space: normal; animation: fade-in 260ms var(--ease); }
+.tg-hint::before { content: "type: "; color: var(--ink-muted); }
+.tg-pane { display: grid; gap: 6px; padding: 10px 12px; border-radius: 10px; background: var(--code-bg); box-shadow: inset 0 0 0 1px var(--line); }
+.tg-pane[hidden] { display: none; }
+.tg-pbody { display: grid; gap: 6px; min-width: 0; }
+.tg-msg { margin: 0; font: 500 13px/1.5 var(--mono); overflow-wrap: anywhere; color: var(--ink); animation: fade-in 260ms var(--ease); }
+.tg-msg b { font-weight: 600; }
+.tg-msg.bad b { color: var(--danger); }
+.tg-msg.good { color: var(--ok); font-family: var(--font); font-weight: 600; }
+.tg-out { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 500 13px/1.5 var(--mono); color: var(--ink); }
+.tg-out.bad { color: var(--danger); }
+.tg-note { margin: 0; font-size: 12.5px; color: var(--ink-muted); }
+.tg-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 14px; }
+.tg-tools[hidden] { display: none; }
+
+/* ---------- mapped types ---------- */
+.tg-mapsrc { min-width: 0; }
+.tg-cols { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 12px; align-items: start; margin-top: 12px; }
+@media (max-width: 640px) { .tg-cols { grid-template-columns: minmax(0, 1fr); } .tg-mid { justify-self: start; } }
+.tg-card { display: grid; gap: 4px; padding: 10px 12px; border-radius: 12px; background: var(--field); min-width: 0; align-content: start; min-height: 112px; }
+.tg-card.out { background: var(--panel); box-shadow: inset 0 0 0 1px var(--line-strong); }
+.tg-card-title { font: 600 12.5px var(--font); color: var(--ink-muted); overflow-wrap: anywhere; }
+.tg-row { padding: 2px 8px; border-radius: 6px; font: 500 13px var(--mono); color: var(--ink); overflow-wrap: anywhere; font-variant-ligatures: none; transition: background var(--fast), opacity var(--fast); }
+.tg-row b { font-weight: 500; color: var(--syn-prop); }
+.tg-row.on { background: color-mix(in srgb, var(--syn-kw) 20%, transparent); }
+.tg-row.skip { opacity: 0.35; text-decoration: line-through; }
+.tg-mid { align-self: center; font: 600 12.5px var(--font); color: var(--ink-soft); }
+.tg-proof { margin: 10px 0 0; padding: 8px 12px; border-radius: 10px; background: color-mix(in srgb, var(--ok) 14%, transparent); font-size: 13.5px; color: var(--ink); }
+.tg-proof[hidden] { display: none; }
+
+/* ---------- infer: the parts of a function type ---------- */
+.tg-anatbox { display: grid; gap: 6px; margin-top: 12px; }
+.tg-anatbox[hidden] { display: none; }
+.tg-lead { margin: 0; font-size: 13.5px; color: var(--ink-soft); }
+.tg-anat { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font: 500 13.5px var(--mono); font-variant-ligatures: none; }
+.tg-seg { padding: 4px 9px; border-radius: 8px; background: var(--field); color: var(--ink); overflow-wrap: anywhere; transition: background var(--fast), color var(--fast); }
+.tg-seg.a { background: none; padding-inline: 2px; color: var(--ink-muted); }
+.tg-seg.lit { background: var(--ink); color: var(--panel); }
+.tg-catch { margin: 8px 0 0; min-height: 1.4em; font-size: 14px; color: var(--ink); }
+
+/* ---------- film ---------- */
+.tg-t { fill: var(--syn-kw); font-weight: 700; }
+.tg-chip { fill: var(--field); stroke: none; }
+.tg-chip.t { fill: var(--ink); }
+.tg-chip-label { fill: var(--ink-muted); font: 500 12px var(--font); }
+.tg-chip-label.t { fill: var(--panel); opacity: 0.8; }
+.tg-chip-value { fill: var(--ink); font: 600 12.5px var(--mono); white-space: pre; font-variant-ligatures: none; }
+.tg-chip-value.t { fill: var(--panel); }
+.tg-arrow { fill: none; stroke: var(--syn-kw); stroke-width: 1.7; stroke-linejoin: round; stroke-linecap: round; }
+.tg-ruletext { font: 600 12.5px var(--font); }
+.tg-ruletext.ok { fill: var(--ok); }
+.tg-ruletext.no { fill: var(--danger); }
+.tg-errbox { fill: color-mix(in srgb, var(--danger) 12%, transparent); stroke: var(--danger); stroke-width: 1.2; }
+.tg-errlabel { fill: var(--danger); font: 600 12px var(--font); }
+.tg-errtext { fill: var(--ink); font: 500 12px var(--mono); white-space: pre; font-variant-ligatures: none; }
+
+/* ---------- text blocks ---------- */
+.tg-excerpt, .tg-answer { display: grid; gap: 8px; min-width: 0; }
+.tg-excerpt > *, .tg-answer > * { min-width: 0; }
+.tg-text { font-size: 14px; color: var(--ink-soft); max-width: 66ch; margin: 0; }
+.tg-text b { color: var(--ink); }
+.tg-claims { margin: 0; padding-left: 18px; font: 500 13px/1.55 var(--mono); color: var(--ink-soft); overflow-wrap: anywhere; }
+.tg-sol { border-radius: 10px; background: var(--field); padding: 8px 12px; display: grid; gap: 8px; }
+.tg-sol summary { cursor: pointer; font: 600 13.5px var(--font); color: var(--ink-soft); }
+.tg-sol[open] summary { margin-bottom: 4px; }
+.tg-sub { display: block; font: 600 13px var(--font); color: var(--ink-muted); margin-top: 6px; }
+.tg-pic { display: block; width: 100%; max-width: 300px; height: auto; }
+.tg-rule { margin: 0; padding: 0; list-style: none; counter-reset: rule; display: grid; gap: 8px; }
+.tg-rule li { counter-increment: rule; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: center; padding: 12px 14px; border-radius: 12px; background: var(--field); font-size: 15px; color: var(--ink-soft); }
+.tg-rule li::before { content: counter(rule); display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: var(--panel); font: 600 13px var(--font); }
+.tg-rule b { color: var(--ink); }
+
+/* show === and => exactly as typed (no font ligatures) in this lesson's code blocks */
+.step[id^="ts-generics-"] .code-block, .step[id^="ts-generics-"] .code-input, .step[id^="ts-generics-"] .code-hl { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }
+
+.tg-honest { display: grid; gap: 6px; }

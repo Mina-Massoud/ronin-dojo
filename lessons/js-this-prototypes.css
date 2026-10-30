@@ -1,0 +1,95 @@
+/* lesson: js-this-prototypes (prefix th-; theme tokens only, light and dark both come from the book stylesheet) */
+
+/* code blocks in this lesson: show === and => exactly as typed */
+.step[id^="js-this-prototypes-"] .code-block, .step[id^="js-this-prototypes-"] .code-input, .step[id^="js-this-prototypes-"] .code-hl { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }
+
+/* ---------- guided scenes ---------- */
+.th-lose, .th-predict, .th-arrows, .th-classchain { display: grid; gap: 14px; min-width: 0; }
+.th-lose > *, .th-predict > *, .th-arrows > *, .th-classchain > * { min-width: 0; }
+.th-cast { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 10px; align-items: center; }
+.th-card { display: grid; gap: 2px; padding: 12px 14px; border-radius: 12px; background: var(--field); transition: opacity var(--fast), box-shadow var(--fast), background var(--fast); }
+.th-card b { font: 600 14px var(--mono); }
+.th-card span { font: 500 12.5px var(--mono); color: var(--ink-soft); overflow-wrap: anywhere; }
+.th-card em { font-style: normal; font-size: 11.5px; color: var(--ink-muted); }
+.th-card.th-small { padding: 10px 12px; }
+.th-card.th-on { box-shadow: inset 0 0 0 2px var(--ink); background: var(--panel); }
+.th-card.th-dim { opacity: 0.45; }
+.th-fnchip { display: grid; gap: 2px; justify-items: center; padding: 8px 12px; border-radius: 999px; background: var(--ink); color: var(--panel); text-align: center; }
+.th-fnchip b { font: 600 13px var(--mono); }
+.th-fnchip span { font-size: 11px; opacity: 0.8; }
+.th-strip { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 10px; align-items: stretch; }
+.th-strip[hidden], .th-chips[hidden], .th-fields[hidden] { display: none; }
+@media (max-width: 560px) { .th-strip { grid-template-columns: minmax(0, 1fr); } .th-cast { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .th-fnchip { grid-column: 1 / -1; grid-row: 1; } }
+.th-callchip { display: block; padding: 10px 12px; border-radius: 10px; background: var(--code-bg); box-shadow: inset 0 0 0 1px var(--line); font: 12.5px/1.5 var(--mono); color: var(--ink); overflow-wrap: anywhere; min-height: 44px; }
+.th-out { display: grid; gap: 4px; padding: 10px 12px; border-radius: 10px; background: var(--field); min-width: 0; }
+.th-out-body { font: 500 13px/1.5 var(--mono); color: var(--ink); overflow-wrap: anywhere; white-space: pre-wrap; }
+.th-out-body[data-kind="bad"] { color: var(--danger); }
+.th-out-body[data-kind="ask"] { color: var(--ink-muted); }
+.th-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.th-chips .chip { font-family: var(--mono); font-size: 12px; text-align: left; }
+.th-mode { cursor: default; }
+.th-predict { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; }
+@media (max-width: 640px) { .th-predict { grid-template-columns: minmax(0, 1fr); } }
+.th-codebox, .th-codebox .code-block { min-width: 0; }
+.th-side { display: grid; gap: 10px; }
+.th-modeline { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.th-hint { font-size: 13px; color: var(--ink-muted); }
+.th-answer { display: grid; gap: 4px; padding: 14px; border-radius: 12px; background: var(--field); transition: background var(--fast), box-shadow var(--fast); }
+.th-answer.th-done { background: var(--panel); box-shadow: inset 0 0 0 2px var(--ink); }
+.th-big { font: 600 24px var(--mono); letter-spacing: -0.02em; overflow-wrap: anywhere; }
+.th-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 560px) { .th-fields { grid-template-columns: minmax(0, 1fr); } }
+.th-chain { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.th-link { padding: 6px 12px; border-radius: 999px; background: var(--field); font: 600 12.5px var(--mono); }
+.th-link.th-end { background: transparent; box-shadow: inset 0 0 0 1.5px var(--line-strong); color: var(--ink-muted); }
+.th-arrow { color: var(--ink-muted); }
+
+/* ---------- film items (SVG) ---------- */
+.th-t1 { fill: var(--ink); font: 600 13px var(--font); }
+.th-t2 { fill: var(--ink-muted); font: 500 11px var(--font); }
+.th-t1.th-inv, .th-t2.th-inv { fill: var(--panel); }
+.film-svg.tall .th-t2 { font-size: 10.5px; }
+.th-tag { fill: var(--ink-muted); font: 600 12px var(--font); }
+.th-ring { fill: none; stroke: var(--ink); stroke-width: 2.5; }
+.th-found { fill: none; stroke: var(--ok); stroke-width: 3.5; }
+.th-modelbl { fill: var(--ink-muted); font: 600 11px var(--font); }
+.th-resbig { fill: var(--ink); font: 600 22px var(--mono); }
+.th-box { fill: var(--panel); stroke: var(--line-strong); stroke-width: 1.2; }
+.th-box.th-end { fill: none; stroke-dasharray: 4 4; }
+.th-key { fill: var(--syn-prop); font: 500 11.5px var(--mono); }
+.th-key.th-mute { fill: var(--ink-muted); }
+.th-arr { fill: none; stroke: var(--ink-soft); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.th-expr { fill: var(--ink); font: 600 15px var(--mono); }
+.th-resline { fill: var(--ink-soft); font: 500 13px var(--mono); }
+.th-stat { fill: var(--ink-muted); font: 600 12px var(--font); }
+.th-stat.th-hit { fill: var(--ink); }
+.film-svg.tall .th-key { font-size: 11px; }
+
+/* ---------- page blocks ---------- */
+.th-note { font-size: 14px; color: var(--ink-soft); max-width: 66ch; }
+.th-note b { color: var(--ink); }
+.th-stack { display: grid; gap: 14px; min-width: 0; }
+.th-stack > * { min-width: 0; }
+.th-excerpt { display: grid; gap: 8px; min-width: 0; }
+.th-excerpt > * { min-width: 0; }
+.th-table { display: grid; gap: 6px; }
+.th-trow { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.4fr); gap: 10px; align-items: baseline; padding: 10px 12px; border-radius: 10px; background: var(--field); font-size: 13.5px; color: var(--ink-soft); }
+.th-trow code { font: 500 12.5px var(--mono); color: var(--ink); overflow-wrap: anywhere; }
+.th-trow code.th-bad { color: var(--danger); }
+@media (max-width: 560px) { .th-trow { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
+.th-solution { border-radius: 10px; background: var(--field); padding: 8px 12px; }
+.th-solution summary { cursor: pointer; font-size: 13.5px; font-weight: 500; color: var(--ink-soft); }
+.th-solution .code-block { margin-top: 8px; }
+.th-rule { margin: 0; padding: 0; list-style: none; counter-reset: rule; display: grid; gap: 8px; }
+.th-rule li { counter-increment: rule; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: center; padding: 12px 14px; border-radius: 12px; background: var(--field); font-size: 15px; color: var(--ink-soft); }
+.th-rule li::before { content: counter(rule); display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: var(--panel); font: 600 13px var(--font); }
+.th-rule b { color: var(--ink); }
+.th-pic { display: block; width: 100%; height: auto; }
+.th-pb { fill: var(--panel); stroke: var(--line-strong); stroke-width: 1.2; }
+.th-pb.th-ink { fill: var(--ink); stroke: none; }
+.th-pb.th-dash { fill: none; stroke-dasharray: 4 3; }
+.th-pt { fill: var(--ink); font: 600 11.5px var(--font); }
+.th-pt.th-inv { fill: var(--panel); }
+.th-pt.th-m { fill: var(--ink-muted); font-weight: 500; font-size: 10.5px; }
+.th-pt.th-mono { font-family: var(--mono); font-weight: 500; }
+.th-pa { fill: none; stroke: var(--ink-soft); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }

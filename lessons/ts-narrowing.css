@@ -1,0 +1,106 @@
+/* lesson: ts-narrowing (prefix tn-; theme tokens only, so light and dark both work) */
+
+/* ---------- layout ---------- */
+.tn-pair { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 640px) { .tn-pair { grid-template-columns: minmax(0, 1fr); } }
+.tn-col { display: grid; gap: 10px; min-width: 0; align-content: start; }
+.tn-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 14px; }
+.tn-chips[hidden] { display: none; }
+.tn-sm { font-size: 12px; padding: 4px 10px; }
+
+/* ---------- the code box (TypeScript with real compiler messages) ---------- */
+.tn-codebox { display: grid; gap: 6px; min-width: 0; }
+.tn-codebar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; }
+.tn-file { font: 600 12.5px var(--font); color: var(--ink-muted); }
+.tn-barbtns { display: flex; flex-wrap: wrap; gap: 6px; }
+.tn-code, .tn-block { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }
+.tn-code { padding-inline: 0; white-space: pre; }
+.tn-ln { display: block; padding: 0 14px; border-radius: 5px; transition: background var(--fast), opacity var(--fast); }
+.tn-ln[data-n]::before { content: attr(data-n); display: inline-block; width: 2ch; margin-right: 1.4ch; text-align: right; color: var(--ink-muted); opacity: 0.75; }
+.tn-code.has-lit .tn-ln:not(.lit) { opacity: 0.55; }
+.tn-ln.lit { background: var(--line-bar); opacity: 1; box-shadow: inset 3px 0 0 var(--syn-kw); }
+.tn-ln.added { background: color-mix(in srgb, var(--ok) 16%, transparent); box-shadow: inset 3px 0 0 var(--ok); opacity: 1; }
+.tn-ln.err { background: color-mix(in srgb, var(--danger) 9%, transparent); box-shadow: inset 3px 0 0 var(--danger); opacity: 1; }
+.tn-ty { color: var(--syn-prop); }
+.tn-diag { display: block; white-space: normal; margin: 3px 10px 7px 34px; padding: 7px 10px; border-radius: 8px; background: color-mix(in srgb, var(--danger) 10%, transparent); color: var(--ink); font: 500 12.5px/1.5 var(--font); animation: fade-in 260ms var(--ease); overflow-wrap: anywhere; }
+.tn-diag b { color: var(--danger); font-weight: 650; }
+.tn-more { display: block; color: var(--ink-soft); }
+
+/* ---------- side boxes: compiler and run output ---------- */
+.tn-side { display: grid; gap: 6px; padding: 10px 12px; border-radius: 10px; background: var(--code-bg); box-shadow: inset 0 0 0 1px var(--line); min-width: 0; align-content: start; }
+.tn-tsc-body, .tn-out-body { display: grid; gap: 4px; font: 12.5px/1.55 var(--mono); color: var(--ink); overflow-wrap: anywhere; font-variant-ligatures: none; }
+.tn-tsc-err { display: grid; gap: 1px; animation: fade-in 260ms var(--ease); }
+.tn-tsc-err b { color: var(--danger); font: 650 12px var(--font); }
+.tn-tsc-err span { font: 12.5px/1.5 var(--font); color: var(--ink-soft); }
+.tn-tsc-sum { font: 650 12.5px var(--font); }
+.tn-tsc-sum.good { color: var(--ok); }
+.tn-tsc-sum.bad { color: var(--danger); }
+.tn-dim, .tn-out-line.dim { color: var(--ink-muted); font-style: italic; }
+.tn-out-line { animation: fade-in 260ms var(--ease); }
+.tn-out-line::before { content: "> "; color: var(--ink-muted); }
+.tn-out-line.err { color: var(--danger); }
+.tn-bodyline { font-size: 13px; color: var(--ink-soft); overflow-wrap: anywhere; }
+.tn-bodyline[hidden] { display: none; }
+.tn-bodyline code, .tn-text code, .tn-typestrip code, .tn-probes code { font: 500 12.5px var(--mono); background: var(--field); padding: 1px 6px; border-radius: 6px; }
+.tn-typestrip { min-height: 1.4em; font-size: 13.5px; color: var(--ink-soft); }
+
+/* ---------- type chips (HTML) ---------- */
+.tn-tchips { display: grid; gap: 7px; }
+.tn-tchip { padding: 8px 12px; border-radius: 9px; background: var(--field); font: 500 13px var(--mono); color: var(--ink); transition: opacity var(--fast), box-shadow var(--fast), background var(--fast); }
+.tn-tchip.hot { background: color-mix(in srgb, var(--syn-kw) 16%, var(--field)); box-shadow: inset 0 0 0 1.6px var(--syn-kw); }
+.tn-tchip.dim { opacity: 0.4; }
+.tn-tchip.gone { opacity: 0.4; text-decoration: line-through; }
+
+/* ---------- the film (SVG) ---------- */
+.tn-fchip { fill: var(--field); }
+.tn-fchip.hot { fill: color-mix(in srgb, var(--syn-kw) 16%, var(--field)); stroke: var(--syn-kw); stroke-width: 1.6; }
+.tn-fchip-t { fill: var(--ink); font-family: var(--mono); white-space: pre; font-variant-ligatures: none; }
+.tn-fstrike { stroke: var(--ink-soft); stroke-width: 1.8; stroke-linecap: round; }
+.fl-code .tn-fty { fill: var(--syn-prop); }
+
+/* ---------- the table of states (page 05) ---------- */
+.tn-table { display: grid; gap: 4px; min-width: 0; }
+.tn-row { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.15fr) minmax(0, 0.9fr) minmax(0, 1.9fr); gap: 8px; align-items: center; padding: 7px 10px; border-radius: 9px; background: var(--field); font: 500 12.5px var(--mono); color: var(--ink); font-variant-ligatures: none; overflow-wrap: anywhere; }
+.tn-row[hidden] { display: none; }
+.tn-row.head { background: none; font: 600 12px var(--font); color: var(--ink-muted); }
+.tn-row.crash { box-shadow: inset 0 0 0 1.6px var(--danger); background: color-mix(in srgb, var(--danger) 9%, var(--field)); }
+.tn-row.planned { box-shadow: inset 0 0 0 1.6px var(--ok); }
+.tn-row.odd { opacity: 0.8; }
+.tn-res { display: grid; gap: 3px; }
+.tn-tag { justify-self: start; padding: 1px 8px; border-radius: 999px; font: 600 11.5px var(--font); background: var(--panel); color: var(--ink-soft); }
+.tn-tag[hidden] { display: none; }
+.tn-row.planned .tn-tag { color: var(--ok); }
+@media (max-width: 560px) { .tn-row { grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1.6fr); gap: 5px; padding: 7px 8px; font-size: 12px; } }
+
+/* ---------- the state cards (page 06) ---------- */
+.tn-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+.tn-cards .tn-card[hidden] { display: none; }
+.tn-card { display: grid; gap: 2px; padding: 9px 11px; border-radius: 10px; background: var(--field); font: 500 12.5px var(--mono); color: var(--ink-soft); box-shadow: inset 0 0 0 1.5px transparent; transition: box-shadow var(--fast), background var(--fast); overflow-wrap: anywhere; }
+.tn-card b { color: var(--ink); font-weight: 600; }
+.tn-card.hot { box-shadow: inset 0 0 0 1.8px var(--syn-kw); background: color-mix(in srgb, var(--syn-kw) 10%, var(--field)); }
+
+/* ---------- proofs: a snippet with its compiler answer and run buttons ---------- */
+.tn-proof { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 12px; align-items: start; min-width: 0; }
+.tn-proof.compact { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 640px) { .tn-proof { grid-template-columns: minmax(0, 1fr); } }
+.tn-proofside { display: grid; gap: 8px; min-width: 0; align-content: start; }
+.tn-runs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tn-runs .chip { font-family: var(--mono); font-size: 12px; }
+.tn-probes { margin: 0; padding: 0 0 0 18px; display: grid; gap: 2px; font-size: 13px; color: var(--ink-soft); }
+
+/* ---------- text blocks ---------- */
+.tn-text { font-size: 14px; color: var(--ink-soft); max-width: 66ch; }
+.tn-text b { color: var(--ink); }
+.tn-excerpt { display: grid; gap: 6px; min-width: 0; }
+.tn-excerpt > * { min-width: 0; }
+.tn-sol { border-radius: 10px; background: var(--field); padding: 8px 12px; }
+.tn-sol summary { cursor: pointer; font: 600 13.5px var(--font); color: var(--ink-soft); }
+.tn-sol[open] summary { margin-bottom: 8px; }
+.tn-sub { display: block; font: 600 13px var(--font); color: var(--ink-muted); margin-top: 6px; }
+.tn-rule { margin: 0; padding: 0; list-style: none; counter-reset: rule; display: grid; gap: 8px; }
+.tn-rule li { counter-increment: rule; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: center; padding: 12px 14px; border-radius: 12px; background: var(--field); font-size: 15px; color: var(--ink-soft); }
+.tn-rule li::before { content: counter(rule); display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: var(--panel); font: 600 13px var(--font); }
+.tn-rule b { color: var(--ink); }
+
+/* show === and => exactly as typed (no font ligatures) in this lesson's code blocks */
+.step[id^="ts-narrowing-"] .code-block, .step[id^="ts-narrowing-"] .code-input, .step[id^="ts-narrowing-"] .code-hl { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }

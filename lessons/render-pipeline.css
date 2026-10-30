@@ -1,0 +1,106 @@
+/* lesson: render-pipeline (prefix rp-; theme tokens only, so light and dark both work) */
+
+/* ---------- the row of five stage chips ---------- */
+.rp-strip { display: flex; align-items: stretch; gap: 4px; min-width: 0; }
+.rp-join { display: grid; place-items: center; color: var(--ink-muted); font-style: normal; font-size: 16px; flex: 0 0 auto; }
+.rp-chip { flex: 1 1 0; min-width: 0; display: grid; align-content: center; gap: 2px; padding: 10px 6px; border-radius: 12px; background: var(--field); text-align: center; color: var(--ink-muted); transition: background var(--fast), color var(--fast), box-shadow var(--fast), opacity var(--fast); }
+.rp-chip b { font: 600 13px var(--font); overflow-wrap: anywhere; }
+.rp-chip-state { font: 500 11.5px var(--font); min-height: 1.3em; }
+.rp-chip.on { background: var(--ink); color: var(--panel); }
+.rp-chip.skip { opacity: 0.55; box-shadow: inset 0 0 0 1px var(--line-strong); }
+.rp-chip.skip b { text-decoration: line-through; }
+@media (max-width: 560px) {
+  .rp-strip { flex-direction: column; }
+  .rp-join { transform: rotate(90deg); height: 12px; }
+  .rp-chip { grid-template-columns: 1fr auto; text-align: left; padding: 8px 12px; align-items: center; }
+}
+
+/* ---------- shared layout bits ---------- */
+.rp-codebox { display: grid; gap: 6px; min-width: 0; }
+.rp-codebox .code-block, .rp-codes .code-block, .rp-excerpt .code-block { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }
+.rp-note { font-size: 14px; color: var(--ink-soft); min-height: 1.4em; margin: 8px 0 0; max-width: 66ch; }
+.rp-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; }
+.rp-chips[hidden], .rp-labbox[hidden], .rp-codes[hidden] { display: none; }
+.rp-pair { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 640px) { .rp-pair { grid-template-columns: minmax(0, 1fr); } }
+.rp-side { display: grid; gap: 10px; min-width: 0; }
+.rp-out { display: grid; gap: 8px; min-width: 0; margin-top: 10px; }
+.rp-out:empty { display: none; }
+.rp-text { font-size: 14px; color: var(--ink-soft); max-width: 66ch; }
+.rp-text b { color: var(--ink); }
+.rp-sub { display: block; font: 600 13px var(--font); color: var(--ink-muted); margin-top: 6px; }
+.rp-sol { border-radius: 10px; background: var(--field); padding: 8px 12px; }
+.rp-sol summary { cursor: pointer; font: 600 13.5px var(--font); color: var(--ink-soft); }
+.rp-sol[open] summary { margin-bottom: 8px; }
+.rp-excerpt { display: grid; gap: 8px; min-width: 0; }
+.rp-excerpt > * { min-width: 0; }
+.rp-pic { display: block; width: 100%; max-width: 300px; height: auto; }
+.rp-arrow { fill: none; stroke: var(--syn-kw); stroke-width: 1.7; stroke-linejoin: round; stroke-linecap: round; }
+
+/* ---------- the read/write timeline (a model) ---------- */
+.rp-ops { display: flex; flex-wrap: wrap; gap: 6px; min-height: 64px; align-content: flex-start; }
+.rp-op { display: grid; gap: 1px; justify-items: center; padding: 6px 8px; border-radius: 9px; font: 600 12px var(--font); background: var(--field); color: var(--ink-soft); animation: fade-in 260ms var(--ease); }
+.rp-op.write { background: var(--code-bg); box-shadow: inset 0 0 0 1px var(--line-strong); }
+.rp-op.forced { background: color-mix(in srgb, var(--danger) 18%, var(--field)); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--danger); }
+.rp-op small { font: 600 11px var(--font); color: var(--danger); }
+.rp-meter { display: flex; align-items: baseline; gap: 10px; padding: 10px 12px; border-radius: 10px; background: var(--field); }
+.rp-count { font: 650 26px var(--font); font-variant-numeric: tabular-nums; color: var(--ink); }
+
+/* ---------- the real boxes used for timing ---------- */
+.rp-labbox { display: grid; gap: 6px; min-width: 0; }
+.rp-lab { max-height: 150px; overflow: auto; border-radius: 10px; background: var(--code-bg); box-shadow: inset 0 0 0 1px var(--line); }
+.rp-lab.small { max-height: 110px; }
+.rp-cell { box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 10px; border-bottom: 1px solid var(--line); font: 500 13px var(--font); color: var(--ink); }
+.rp-cell-sub { color: var(--ink-muted); font-size: 12px; }
+.rp-flip { letter-spacing: 0; }
+
+/* ---------- the two animated boxes ---------- */
+.rp-lanes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 420px) { .rp-lanes { gap: 8px; } }
+.rp-lanebox { display: grid; gap: 8px; min-width: 0; }
+.rp-lane-cap { display: grid; gap: 2px; }
+.rp-lane-cap b { font: 600 15px var(--mono); color: var(--ink); }
+.rp-lane-cap span { font: 500 12px var(--font); color: var(--ink-muted); }
+.rp-lane { position: relative; height: 150px; border-radius: 12px; background: var(--field); overflow: hidden; }
+.rp-sq { position: absolute; top: 0; left: calc(50% - 20px); width: 40px; height: 40px; border-radius: 10px; background: var(--syn-kw); }
+.rp-codes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+@media (max-width: 640px) { .rp-codes { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- the CSS variable lab ---------- */
+.rp-vl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 10px; border-radius: 12px; background: var(--field); }
+.rp-vl-kid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; padding: 6px; border-radius: 8px; background: var(--panel); }
+.rp-vl-kid i { display: block; height: 14px; border-radius: 4px; background: var(--line-strong); }
+.rp-vl-kid i.rp-vl-wings { background: var(--syn-kw); opacity: calc(1 - var(--hover, 0.2)); }
+
+/* ---------- tables ---------- */
+.rp-table, .rp-model { display: grid; gap: 6px; min-width: 0; }
+.rp-trow { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(0, 2fr); gap: 10px; align-items: center; padding: 8px 12px; border-radius: 10px; background: var(--field); font-size: 13.5px; color: var(--ink-soft); }
+.rp-trow code { background: none; padding: 0; color: var(--syn-prop); font: 500 13px var(--mono); overflow-wrap: anywhere; }
+.rp-kind { font: 600 12.5px var(--font); color: var(--ink); }
+.rp-trow.composite .rp-kind { color: var(--ok); }
+.rp-trow.layout .rp-kind { color: var(--danger); }
+.rp-path { overflow-wrap: anywhere; }
+@media (max-width: 560px) { .rp-trow { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .rp-path { grid-column: 1 / -1; } }
+.rp-model-row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.6fr) auto; gap: 10px; align-items: center; padding: 8px 12px; border-radius: 10px; background: var(--field); font-size: 13.5px; color: var(--ink-soft); }
+.rp-model-ops { display: flex; flex-wrap: wrap; gap: 3px; }
+.rp-model-ops i { font: 600 11.5px var(--font); font-style: normal; padding: 2px 6px; border-radius: 6px; background: var(--panel); color: var(--ink-soft); }
+.rp-model-ops i.write { background: var(--code-bg); box-shadow: inset 0 0 0 1px var(--line-strong); }
+.rp-model-n { color: var(--ink); white-space: nowrap; }
+@media (max-width: 560px) { .rp-model-row { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- the film (SVG) ---------- */
+.rp-card { fill: var(--field); stroke: none; }
+.rp-card.hot { fill: var(--code-bg); stroke: var(--syn-kw); stroke-width: 2; }
+.rp-name { fill: var(--ink); font: 650 15px var(--font); }
+.rp-job { fill: var(--ink-soft); font: 500 12.5px var(--font); }
+.rp-thread { fill: var(--syn-kw); font: 600 12.5px var(--font); }
+.rp-seg { fill: var(--line-strong); opacity: 0.55; }
+
+/* ---------- the "in one sentence" list ---------- */
+.rp-rule { margin: 0; padding: 0; list-style: none; counter-reset: rule; display: grid; gap: 8px; }
+.rp-rule li { counter-increment: rule; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: center; padding: 12px 14px; border-radius: 12px; background: var(--field); font-size: 15px; color: var(--ink-soft); }
+.rp-rule li::before { content: counter(rule); display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: var(--panel); font: 600 13px var(--font); }
+.rp-rule b { color: var(--ink); }
+
+/* show === and => exactly as typed (no font ligatures) in this lesson's code blocks */
+.step[id^="render-pipeline-"] .code-block, .step[id^="render-pipeline-"] .code-input, .step[id^="render-pipeline-"] .code-hl { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }

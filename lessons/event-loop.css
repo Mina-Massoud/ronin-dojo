@@ -1,0 +1,92 @@
+/* lesson: event-loop (theme tokens only; light and dark both come from book.css) */
+
+/* ---------- 01 freeze ---------- */
+.el-freeze { display: grid; justify-items: center; gap: 10px; padding: 8px 0 16px; }
+.el-spin { width: 76px; height: 76px; border-radius: 50%; box-shadow: inset 0 0 0 6px var(--field-strong); position: relative; will-change: transform; }
+.el-spin i { position: absolute; top: 0; left: 50%; width: 14px; height: 14px; margin: -1px 0 0 -7px; border-radius: 50%; background: var(--ink); }
+.el-status { min-height: 1.4em; font-size: 13.5px; color: var(--ink-muted); text-align: center; }
+.el-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 14px; }
+.el-chips[hidden] { display: none; }
+.readouts.away { opacity: 0; transform: translateY(6px); }
+.el-freeze + .readouts.away { display: none; }
+
+/* ---------- code with lit lines, console, queues ---------- */
+.el-pair { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 640px) { .el-pair { grid-template-columns: minmax(0, 1fr); } }
+.el-codebox { min-width: 0; }
+.el-side { display: grid; gap: 10px; min-width: 0; }
+.el-code, .el-con-body { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }
+.el-code { padding-inline: 0; white-space: pre; }
+.el-ln { display: block; padding: 0 14px; border-radius: 5px; transition: background var(--fast), opacity var(--fast); }
+.el-code:has(.lit) .el-ln:not(.lit):not(.done) { opacity: 0.55; }
+.el-ln.done { opacity: 0.7; }
+.el-ln.lit { background: var(--line-bar); opacity: 1; box-shadow: inset 3px 0 0 var(--syn-kw); }
+.el-console { display: grid; gap: 6px; padding: 10px 12px; border-radius: 10px; background: var(--code-bg); box-shadow: inset 0 0 0 1px var(--line); min-height: 88px; }
+.el-con-body { display: grid; gap: 2px; font: 12.5px/1.6 var(--mono); color: var(--ink); }
+.el-con-line { animation: fade-in 260ms var(--ease); }
+.el-con-line::before { content: "> "; color: var(--ink-muted); }
+.el-compare { font-size: 13px; color: var(--ink-soft); min-height: 1.4em; }
+.el-queues { display: grid; gap: 8px; }
+.el-q { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.el-q .label { margin-right: 4px; }
+.el-hint { font-size: 13px; color: var(--ink-muted); max-width: 62ch; }
+
+/* ---------- film items (SVG) ---------- */
+.el-it { fill: var(--panel); stroke: var(--line-strong); stroke-width: 1; }
+.el-k-ink { fill: var(--ink); }
+.el-k-timer { fill: var(--syn-num); }
+.el-k-micro { fill: var(--syn-kw); }
+.el-k-raf { fill: var(--syn-str); }
+.el-t1 { fill: var(--ink); font: 600 12px var(--font); }
+.el-t2 { fill: var(--ink-muted); font: 500 10px var(--font); }
+.el-con { fill: var(--ink); font: 500 12px var(--mono); }
+
+/* ---------- timelines (lanes) ---------- */
+.el-row { display: grid; gap: 4px; margin-bottom: 12px; }
+.el-row[hidden] { display: none; }
+.el-lane { display: block; width: 100%; height: auto; }
+.el-lane * { transition: opacity 240ms linear, fill 240ms linear; }
+.el-slot { fill: var(--field-strong); }
+.el-slot.ok { fill: var(--ok); }
+.el-slot.lost { fill: var(--danger); }
+.el-busy { fill: var(--ink); }
+.el-upd { fill: var(--syn-fn); }
+.el-paint { fill: var(--ink-soft); }
+.el-wake { stroke: var(--ink-soft); stroke-width: 2; }
+.el-window { fill: var(--syn-fn); opacity: 0.35; }
+.el-beat { fill: var(--ink); }
+.el-beat.late { fill: var(--danger); }
+.el-naive { fill: var(--danger); opacity: 0.7; }
+.el-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: 12px; color: var(--ink-muted); }
+.el-legend .sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-left: 6px; }
+.el-legend .sw.ok { background: var(--ok); }
+.el-legend .sw.lost { background: var(--danger); }
+.el-legend .sw.busy { background: var(--ink); }
+.el-legend .sw.pt { background: var(--ink-soft); transform: rotate(45deg) scale(0.8); }
+.el-legend .sw.upd { background: var(--syn-fn); border-radius: 50%; }
+
+/* ---------- trade-offs ---------- */
+.el-starve { display: grid; gap: 12px; }
+.el-starve[hidden], .el-anim[hidden] { display: none; }
+.el-anim { display: grid; gap: 4px; }
+.el-tick { opacity: 0.35; transition: opacity 200ms, background var(--fast), color var(--fast); }
+.el-tick.on { opacity: 1; background: var(--syn-kw); color: var(--panel); }
+.el-wait { transition: background var(--fast), color var(--fast); }
+.el-wait.on { background: var(--danger); color: var(--panel); }
+
+/* ---------- text blocks ---------- */
+.el-card { display: grid; gap: 8px; }
+.el-order { font-size: 13.5px; color: var(--ink-soft); }
+.el-excerpt { display: grid; gap: 8px; min-width: 0; }
+.el-excerpt > * { min-width: 0; }
+.el-note { font-size: 14px; color: var(--ink-soft); max-width: 66ch; }
+.el-note b { color: var(--ink); }
+.el-rule { margin: 0; padding: 0; list-style: none; counter-reset: rule; display: grid; gap: 8px; }
+.el-rule li { counter-increment: rule; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: center; padding: 12px 14px; border-radius: 12px; background: var(--field); font-size: 15px; color: var(--ink-soft); }
+.el-rule li::before { content: counter(rule); display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: var(--panel); font: 600 13px var(--font); }
+.el-rule b { color: var(--ink); }
+
+/* code blocks inside this lesson: show === and => exactly as typed (no font ligatures) */
+.step[id^="event-loop-"] .code-block, .step[id^="event-loop-"] .code-input, .step[id^="event-loop-"] .code-hl { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }
+.el-legend > span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.el-legend > span .sw { margin-left: 0; }

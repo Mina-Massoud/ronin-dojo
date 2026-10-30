@@ -1,0 +1,74 @@
+/* lesson: js-scope-closures (prefix sc-; theme tokens only, so light and dark both work) */
+
+/* ---------- code with a lit line, console, chips ---------- */
+.sc-pair { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 640px) { .sc-pair { grid-template-columns: minmax(0, 1fr); } }
+.sc-codebox, .sc-nestbox { display: grid; gap: 6px; min-width: 0; }
+.sc-side { display: grid; gap: 10px; min-width: 0; }
+.sc-stack { display: grid; gap: 16px; }
+.sc-panel { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 640px) { .sc-panel { grid-template-columns: minmax(0, 1fr); } }
+.sc-code, .sc-con-body { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }
+.sc-code { padding-inline: 0; white-space: pre; }
+.sc-ln { display: block; padding: 0 14px; border-radius: 5px; transition: background var(--fast), opacity var(--fast); }
+.sc-code:has(.lit) .sc-ln:not(.lit) { opacity: 0.6; }
+.sc-ln.lit { background: var(--line-bar); opacity: 1; box-shadow: inset 3px 0 0 var(--syn-kw); }
+.sc-console { display: grid; gap: 6px; padding: 10px 12px; border-radius: 10px; background: var(--code-bg); box-shadow: inset 0 0 0 1px var(--line); min-height: 72px; }
+.sc-con-body { display: grid; gap: 2px; font: 12.5px/1.6 var(--mono); color: var(--ink); overflow-wrap: anywhere; }
+.sc-con-line { animation: fade-in 260ms var(--ease); }
+.sc-con-line::before { content: "> "; color: var(--ink-muted); }
+.sc-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 14px; }
+.sc-chips[hidden] { display: none; }
+
+/* ---------- nested boxes (HTML) ---------- */
+.sc-nest { display: grid; gap: 8px; min-width: 0; }
+.sc-box { display: grid; gap: 4px; padding: 10px 10px 10px 12px; border-radius: 12px; background: var(--field); box-shadow: inset 0 0 0 1.5px transparent; transition: box-shadow var(--fast), background var(--fast); min-width: 0; }
+.sc-box .sc-box { background: var(--panel); box-shadow: inset 0 0 0 1px var(--line-strong); }
+.sc-box.look { box-shadow: inset 0 0 0 2px var(--syn-kw); }
+.sc-box-name { font: 600 12.5px var(--font); color: var(--ink-muted); }
+.sc-vrow { padding: 2px 6px; border-radius: 6px; font: 500 13px var(--mono); color: var(--ink); overflow-wrap: anywhere; font-variant-ligatures: none; transition: background var(--fast); }
+.sc-vrow code { background: none; padding: 0; font: inherit; color: var(--syn-prop); }
+.sc-vrow.found { background: color-mix(in srgb, var(--ok) 22%, transparent); }
+.sc-val.dead { color: var(--ink-muted); font-style: italic; }
+.sc-ptr { color: var(--syn-kw); font: 500 12px var(--font); }
+
+/* ---------- film items (SVG) ---------- */
+.sc-card { fill: var(--field); stroke: none; }
+.sc-card.pseudo { fill: var(--code-bg); stroke: var(--line-strong); stroke-dasharray: 4 3; stroke-width: 1; }
+.sc-card.hot { stroke: var(--syn-kw); stroke-width: 2; }
+.sc-title { fill: var(--ink-soft); font: 600 12px var(--font); }
+.sc-row { fill: var(--ink); font: 500 12px var(--mono); white-space: pre; font-variant-ligatures: none; }
+.sc-row.tdz { fill: var(--ink-muted); font-style: italic; }
+.sc-hotrow { fill: var(--line-bar); }
+.sc-arrow { fill: none; stroke: var(--syn-kw); stroke-width: 1.7; stroke-linejoin: round; }
+.sc-head, .sc-dot { fill: var(--syn-kw); }
+.sc-freed { fill: var(--danger); font: 600 11px var(--font); }
+.sc-strip { fill: var(--ink-soft); font: 600 12px var(--font); }
+.sc-con { fill: var(--ink); font: 500 12px var(--mono); }
+
+/* ---------- typing timeline ---------- */
+.sc-lane { display: block; width: 100%; height: auto; }
+.sc-lane * { transition: opacity 240ms linear; }
+.sc-key { fill: var(--ink); }
+.sc-send { fill: var(--syn-kw); }
+.sc-send.raw { fill: var(--danger); opacity: 0.8; }
+.sc-note { font-size: 13.5px; color: var(--ink-soft); min-height: 1.4em; }
+
+/* ---------- text blocks ---------- */
+.sc-excerpt { display: grid; gap: 8px; min-width: 0; }
+.sc-excerpt > * { min-width: 0; }
+.sc-text { font-size: 14px; color: var(--ink-soft); max-width: 66ch; }
+.sc-text b { color: var(--ink); }
+.sc-sol { border-radius: 10px; background: var(--field); padding: 8px 12px; }
+.sc-sol summary { cursor: pointer; font: 600 13.5px var(--font); color: var(--ink-soft); }
+.sc-sol[open] summary { margin-bottom: 8px; }
+.sc-answer { display: grid; gap: 8px; }
+.sc-rule { margin: 0; padding: 0; list-style: none; counter-reset: rule; display: grid; gap: 8px; }
+.sc-rule li { counter-increment: rule; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: center; padding: 12px 14px; border-radius: 12px; background: var(--field); font-size: 15px; color: var(--ink-soft); }
+.sc-rule li::before { content: counter(rule); display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: var(--panel); font: 600 13px var(--font); }
+.sc-rule b { color: var(--ink); }
+.sc-sub { display: block; font: 600 13px var(--font); color: var(--ink-muted); margin-top: 6px; }
+.sc-pic { display: block; width: 100%; max-width: 300px; height: auto; }
+
+/* show === and => exactly as typed (no font ligatures) in this lesson's code blocks */
+.step[id^="js-scope-closures-"] .code-block, .step[id^="js-scope-closures-"] .code-input, .step[id^="js-scope-closures-"] .code-hl { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }

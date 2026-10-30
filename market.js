@@ -1,0 +1,55 @@
+/* Market research, 30 Oct 2026: 47 job posts read in full (Jul–Oct 2026), plus salary datasets.
+   Percentages are a rough read of a small sample, not a market measurement. */
+window.MARKET = {
+  lede: "47 real job posts from Jul–Oct 2026, read one by one: 17 frontend, 19 full-stack, 11 Three.js. Remote, Gulf and Europe. Ranked by how reachable each role is for you in 3 months.",
+  note: "Sample: reactjobs.io, Remote Rocketship, Himalayas, Arc, Djinni, the three.js forum. Wuzzuf, Bayt, Glassdoor and LinkedIn job pages were blocked, so Egypt numbers come from salary datasets, not job posts. A dash means the role's sample didn't track that skill.",
+  roles: [
+    {
+      rank: 1, title: "Mid/Senior Frontend",
+      why: "Your stack is what they ask for most: React 82%, TypeScript 71%. The gaps (testing, performance, accessibility) take weeks, not months. Watch out: 9 of 17 posts ask for 5+ years, so aim at mid-level and contract roles.",
+      pay: ["Europe remote, mid: about €57k/yr (Remote Rocketship, 602 roles)", "Global remote, entry level: $48–70k (Canonical)", "Egypt-based remote, mid: about $1.8–4k/month (estimate)"],
+      reach: "Most reachable",
+    },
+    {
+      rank: 2, title: "Mid-level Full-stack",
+      why: "Big market, and the Gulf hires with visas. But it needs real backend: databases in 74% of posts, cloud 63%, CI/CD 47%. Your edge: 74% mention AI, and you build with AI every day.",
+      pay: ["Remote mid-level: $40–60k (Arc, needs US time overlap)", "Europe remote, mid: about €64.5k/yr", "UAE engineers, all levels: median about AED 28k/month (Levels.fyi)"],
+      reach: "Second",
+    },
+    {
+      rank: 3, title: "Three.js / WebGL",
+      why: "It fits what you love, and a portfolio matters more than years. But it's the thinnest market: none of the 11 posts was open to someone living in Egypt. The best routes are agency or freelance work, or frontend roles with 3D listed as a plus.",
+      pay: ["US average: $89–121k (ZipRecruiter, via CreativeDevJobs, Jun 2026)", "Freelance: $34–96/hour", "Egypt-based remote: $1.5–4k/month (estimate)"],
+      reach: "Thinnest market",
+    },
+  ],
+  columns: ["Frontend", "Full-stack", "Three.js"],
+  skills: [
+    { name: "React", pct: [82, 74, 64], week: 3 },
+    { name: "TypeScript", pct: [71, 63, 36], week: 1 },
+    { name: "Any database / SQL", pct: [null, 74, null], week: 8 },
+    { name: "AI (tools or LLM features)", pct: [12, 74, 18], week: 11 },
+    { name: "Performance", pct: [59, 21, 73], week: 2 },
+    { name: "Testing", pct: [59, 42, 9], week: 5 },
+    { name: "Cloud (AWS, Vercel, …)", pct: [18, 63, 9], week: 10 },
+    { name: "Accessibility", pct: [53, 5, 0], week: 4 },
+    { name: "CI/CD", pct: [29, 47, 9], week: 10 },
+    { name: "Node.js / backend", pct: [null, 42, 36], week: 7 },
+    { name: "Design systems", pct: [41, null, null], week: 6 },
+    { name: "Docker", pct: [0, 37, 9], week: 10 },
+    { name: "System design / architecture", pct: [18, 32, 0], week: 9 },
+    { name: "Next.js", pct: [24, 11, 27], week: 3 },
+    { name: "WebGL / Three.js", pct: [0, 0, 100], week: "G" },
+    { name: "GLSL shaders", pct: [0, 0, 36], week: "G" },
+    { name: "Kubernetes", pct: [0, 16, 0], week: 10 },
+  ],
+  egypt: "40,000 EGP/month is about $800 (at roughly 50 EGP per dollar). The Cairo median for all software engineers is about 47k EGP/month (Levels.fyi, n=355, skewed to multinationals). For 2 years of experience, the realistic route to 40k+ is a foreign company paying for remote work.",
+  loop: [
+    ["Recruiter screen", "20–30 min. Ask them: which rounds, and is AI allowed?"],
+    ["Technical screen", "45–60 min. JavaScript/TypeScript basics: closures, the event loop, types."],
+    ["Machine coding", "45–90 min. Build a working component live: autocomplete, infinite scroll, modal, chat. Accessibility counts."],
+    ["System design", "45–60 min. Frontend: feed, autocomplete, chat. Full-stack adds the API and the database."],
+    ["Behavioral", "About 45 min. Your projects: what you built, what was AI, what you'd change."],
+  ],
+  ai: "AI in interviews is split. Canva and Shopify allow it. Most big tech still bans it. Where it's allowed, they grade how you check and explain the AI's code. Never accept AI output blindly.",
+};
