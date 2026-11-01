@@ -28,7 +28,7 @@
       h("span.sc-box-name", e.label),
       f.envs[e.id].vars.map((v) => h("div.sc-vrow", { "data-var": `${e.id}:${v.n}` },
         h("code", v.n), " = ", h("span.sc-val" + (v.tdz ? ".dead" : ""), v.v),
-        v.f && v.f.to != null ? h("span.sc-ptr", ` → born in ${label(v.f.to)}`) : null)),
+        v.f && v.f.to != null ? h("span.sc-ptr", ` → created in ${label(v.f.to)}`) : null)),
       (kids[e.id] || []).map(box));
     const el = h("div.sc-nest", (kids[-1] || []).map(box));
     return {
@@ -76,7 +76,7 @@
         {
           say: "You have not seen why yet. A wrong guess is fine: the next pages explain it.",
           enter: (s) => { s.load("loopVar"); s.picker.hidden = true; },
-          guess: { q: "What will the three timers print?", options: ["0, 1, 2", "3, 3, 3", "0, 0, 0"], answer: 1, why: "All three timers read the same variable i. The loop finishes first, so i is already 3 when they run. The next pages show the boxes." },
+          guess: { q: "What will the three timers print?", options: ["0, 1, 2", "3, 3, 3", "0, 0, 0"], answer: 1, why: "All three timers read the same variable i. The loop finishes first, so i is already 3 when they run. The next pages show the scopes behind this." },
           action: { label: "Run it in this browser", icon: "play", prompt: "Press the button to run the real code.", run: (s, ctx) => s.run(ctx) },
           after: (s) => (s.real ? `Your browser printed: ${joinC(outLines(s.real))}.` : "Press the button to run the real code."),
         },
@@ -145,19 +145,19 @@
       },
       steps: [
         {
-          say: "Think of rooms inside a house. You look for a pen: first on your desk, then in the room, then in the whole house. You stop at the first pen.",
+          say: "Look at how the code is written. inner() is written inside outer(), and outer() is written inside the script. The scopes on the right are nested the same way: the inner() scope sits inside the outer() scope, which sits inside the global scope.",
           enter: (s) => { s.load(res, fr, fr.line); s.picker.hidden = true; },
-          show: (s, ctx) => { const inner = s.nv.box(res.envs.findIndex((e) => e.label === "inner()")); if (inner) ctx.callout(inner, "your desk: inner()", "top"); },
+          show: (s, ctx) => { const inner = s.nv.box(res.envs.findIndex((e) => e.label === "inner()")); if (inner) ctx.callout(inner, "the code running now: inner()", "top"); },
         },
         {
-          say: "JavaScript does the same with variables. The boxes are nested like rooms. The biggest box is the global box. inner() wants to read a.",
+          say: "inner() is running, and it wants to read a. JavaScript looks for a in the scope of the code that is running now. If a is not there, it looks in the scope around it, and so on. It stops at the first match.",
           enter: (s) => { s.load(res, fr, fr.line); s.picker.hidden = true; },
-          guess: { q: "Which box does JavaScript look in FIRST for a?", options: ["The global box", "The outer() box", "The inner() box"], answer: 2, why: "It always starts in the box of the code that is running now (inner), then goes one step outward at a time." },
+          guess: { q: "Which scope does JavaScript look in FIRST for a?", options: ["The global scope", "The outer() scope", "The inner() scope"], answer: 2, why: "It always starts in the scope of the code that is running now (inner), then goes one scope outward at a time." },
           action: { label: "Look up a", icon: "search", prompt: "Press the button and watch the search.", run: (s, ctx) => s.walk("a", ctx) },
           after: (s) => `The search went: ${s.path("a")}. It stopped in ${label(res, fr.looks.find((x) => x.name === "a").found)}, where a is ${fr.envs[fr.looks.find((x) => x.name === "a").found].vars.find((v) => v.n === "a").v}.`,
         },
         {
-          say: "Now b, which lives one box out, and c, which is right here.",
+          say: "Now look up b, which lives one scope further out, and c, which lives in inner() itself.",
           enter: (s) => { s.load(res, fr, fr.line); s.picker.hidden = true; },
           action: { label: "Look up b, then c", icon: "search", run: async (s, ctx) => { await s.walk("b", ctx); await ctx.wait(500); await s.walk("c", ctx); } },
           after: (s) => `b: ${s.path("b")}. c: ${s.path("c")}. The closer the variable, the shorter the search.`,
@@ -169,10 +169,10 @@
           after: (s) => (s.real && s.real.error ? `Your browser says ${s.real.error.name}: ${s.real.error.message}. The wording is different in each browser, but the error is the same.` : ""),
         },
         {
-          say: "Two boxes can have the same name. The nearest one wins, and the far one is hidden. This is called shadowing.",
+          say: "Two scopes can each have a variable with the same name. The nearest one wins, and the outer one is hidden. This is called shadowing.",
           enter: (s) => { s.load(sh, shFr, shFr.line); s.picker.hidden = true; },
           action: { label: "Run it in this browser", icon: "play", run: async (s, ctx) => { s.real = await D.runForReal(PR.shadow); await showRun(s.con, s.real, ctx); } },
-          after: (s) => `Your browser printed: ${joinC(outLines(s.real))}. Inside show() the search for x stops at show()'s own box. Outside, only the global x exists.`,
+          after: (s) => `Your browser printed: ${joinC(outLines(s.real))}. Inside show() the search for x stops at show()'s own scope. Outside show(), only the global x exists.`,
         },
         {
           say: "Free play: pick a variable and watch the search from inside inner().",
@@ -180,22 +180,22 @@
           show: (s, ctx) => { s.ctxNow = ctx; },
         },
       ],
-      takeaway: "JavaScript looks for a variable in the box of the running code, then outward one box at a time, and uses the first match.",
+      takeaway: "JavaScript looks for a variable in the scope of the running code, then outward one scope at a time, and uses the first match.",
       check: {
         q: "Inside inner(), the code reads b. b is declared in outer(). What happens?",
-        options: ["ReferenceError: b is not defined", "It finds b in the outer() box", "It finds undefined"],
+        options: ["ReferenceError: b is not defined", "It finds b in the outer() scope", "It finds undefined"],
         answer: 1,
-        why: ["The search goes outward, so outer() is searched.", "Yes. inner() is written inside outer(), so outer() is its parent box.", "undefined only appears for a var that is declared but not yet set. Here the real b is found."],
+        why: ["The search goes outward, so outer() is searched.", "Yes. inner() is written inside outer(), so the outer() scope is its parent scope.", "undefined only appears for a var that is declared but not yet set. Here the real b is found."],
       },
     });
   };
 
   /* ---------- 03. Hoisting and the dead zone (every result comes from a real run) ---------- */
   V.hoisting = () => {
-    const ids = ["hoistVar", "hoistLet", "fnDecl", "fnExpr"];
+    const ids = ["hoistVar", "hoistLet", "snip:tdzBlock", "fnDecl", "fnExpr"];
     const SN_OF = (id) => D.SNIPPETS[id.slice(5)];
     const isSnip = (id) => id.startsWith("snip:");
-    const title = (id) => (isSnip(id) ? ({ "snip:tdzTypeof": "typeof on a let", "snip:tdzClass": "new on a class" })[id] : PR[id].title);
+    const title = (id) => (isSnip(id) ? ({ "snip:tdzTypeof": "typeof on a let", "snip:tdzClass": "new on a class", "snip:tdzBlock": "A let inside a block", "snip:tdzTimeEarly": "show() is called before let x runs", "snip:tdzTimeLate": "show() is called after let x runs" })[id] : PR[id].title);
     return guided({
       title: "Before the first line runs",
       build(view) {
@@ -216,7 +216,7 @@
             const cv = codeView(sn ? sn.code.split("\n") : r.lines);
             const nv = nested && r ? nestView(r, r.frames[0]) : null;
             const con = consoleBox("Real console output");
-            return { id, sn, cv, nv, con, el: h("div.sc-panel", h("div.sc-codebox", h("span.label", list.length > 1 ? title(id) : "The program"), cv.el), h("div.sc-side", nv ? h("div.sc-nestbox", h("span.label", "The global box, before line 1"), nv.el) : null, con.el)) };
+            return { id, sn, cv, nv, con, el: h("div.sc-panel", h("div.sc-codebox", h("span.label", list.length > 1 ? title(id) : "The program"), cv.el), h("div.sc-side", nv ? h("div.sc-nestbox", h("span.label", "The global scope, before line 1"), nv.el) : null, con.el)) };
           });
           stack.replaceChildren(...s.panels.map((p) => p.el));
           chips.forEach((c, i) => c.setAttribute("aria-pressed", String(list.length === 1 && list[0] === ids[i])));
@@ -224,41 +224,55 @@
         s.run = async (ctx) => {
           for (const p of s.panels) { s.real[p.id] = p.sn ? await D.runSnippet(p.sn) : await D.runForReal(PR[p.id]); await showRun(p.con, s.real[p.id], ctx); }
         };
-        s.said = () => s.list.map((id) => `${title(id)}: ${joinC(outLines(s.real[id])) || "(nothing)"}`).join(" · ");
+        s.said = () => s.list.map((id) => `${s.list.length > 1 ? title(id) + ": " : ""}${joinC(outLines(s.real[id])) || "(nothing)"}`).join(" · ");
         s.load(["hoistVar"]);
         return s;
       },
       steps: [
         {
-          say: "Before class, a teacher puts a name card on every desk. Then the students come in. JavaScript also sets up its boxes before it runs line 1.",
+          say: "A scope starts when the script starts, when a function is called, or when a { } block is entered. Before its first line runs, JavaScript finds every variable and function declared in that scope and creates those names. This is called hoisting. The code is not moved anywhere: the names simply exist from the start of the scope.",
           enter: (s) => { s.load(["hoistVar"]); s.picker.hidden = true; },
           show: (s, ctx) => { const row = s.panels[0].nv.row(0, "a"); if (row) ctx.callout(row, "a already exists, before line 1", "bottom"); },
         },
         {
-          say: "A var gets a blank card: its value is undefined. This setting-up is called hoisting.",
+          say: "Every declared name exists from the start, but the starting value depends on how it was declared. A var starts with the value undefined. The value 5 is only stored when line 2 runs.",
           enter: (s) => { s.load(["hoistVar"]); s.picker.hidden = true; },
-          guess: { q: "console.log(a) comes BEFORE var a = 5. What does it print?", options: ["5", "undefined", "An error"], answer: 1, why: "The box and the name a already exist, but the value 5 is only put in when line 2 runs." },
+          guess: { q: "console.log(a) comes BEFORE var a = 5. What does it print?", options: ["5", "undefined", "An error"], answer: 1, why: "The name a already exists in the global scope, with the value undefined. The value 5 is only stored when line 2 runs." },
           action: { label: "Run it in this browser", icon: "play", prompt: "Press the button to run the real code.", run: (s, ctx) => s.run(ctx) },
           after: (s) => `Your browser printed: ${s.said()}.`,
         },
         {
-          say: "A let gets a covered desk. You may not touch it until its line runs. This covered time is the dead zone (the TDZ).",
+          say: "A let is hoisted too. You can see it in the picture: the name a already exists before line 1. But it is not initialized, so it has no value at all, not even undefined. From the start of the scope until the let line runs, the variable is in the temporal dead zone (TDZ). Reading it during that time throws an error.",
           enter: (s) => { s.load(["hoistLet"]); s.picker.hidden = true; },
-          guess: { q: "Same code, but with let. What happens?", options: ["It prints undefined", "It prints 5", "It throws an error"], answer: 2, why: "A let exists in the box from the start, but using it in the dead zone is not allowed. The error is a ReferenceError." },
+          guess: { q: "Same code, but with let. What happens?", options: ["It prints undefined", "It prints 5", "It throws an error"], answer: 2, why: "The name a exists from the start of the scope, but it is still in the TDZ on line 1, because line 2 has not run yet. Reading it throws a ReferenceError." },
           action: { label: "Run it in this browser", icon: "play", prompt: "Press the button to run the real code.", run: (s, ctx) => s.run(ctx) },
           after: (s) => `Your browser said: ${s.said()}. The words differ in each browser; the kind of error (ReferenceError) is the same.`,
         },
         {
-          say: "Functions are different again. A function declaration is ready before line 1, with its body. A var that holds a function is only a blank card.",
+          say: "Many people say that let is not hoisted. This program shows that it is. There is an outer x. Inside the block, the first line reads x, and the block's own let x comes one line later.",
+          enter: (s) => { s.load(["snip:tdzBlock"], false); s.picker.hidden = true; },
+          guess: { q: "What does the first line inside the block print?", options: ["outer", "It throws a ReferenceError", "undefined"], answer: 1, why: "If let were not hoisted, JavaScript would find the outer x and print outer. It throws instead, because the block's own x already exists from the start of the block. It hides the outer x, and it is still in the TDZ." },
+          action: { label: "Run it in this browser", icon: "play", prompt: "Press the button to run the real code.", run: (s, ctx) => s.run(ctx) },
+          after: (s) => `Your browser said: ${s.said()}. So console.log(x) found the block's own x, not the outer one.`,
+        },
+        {
+          say: "The word temporal means time. The TDZ depends on WHEN the code runs, not on where it is written in the file. In both programs, show() is written above let x. The only difference is when show() is called.",
+          enter: (s) => { s.load(["snip:tdzTimeEarly", "snip:tdzTimeLate"], false); s.picker.hidden = true; },
+          guess: { q: "Which program works?", options: ["Both of them", "Only the second one", "Neither of them"], answer: 1, why: "In the first program, show() runs while x is still in the TDZ, so reading x throws. In the second program, the let x line has already run, so x is 1. The code inside show() is the same; only the time of the call is different." },
+          action: { label: "Run both", icon: "play", prompt: "Press the button to run both programs.", run: (s, ctx) => s.run(ctx) },
+          after: (s) => `Your browser printed: ${s.said()}.`,
+        },
+        {
+          say: "Functions are different again. A function declaration is hoisted with its whole body, so you can call it before its line. A function stored in a var is not: only the name sayHi is hoisted, with the value undefined.",
           enter: (s) => { s.load(["fnDecl", "fnExpr"]); s.picker.hidden = true; },
-          guess: { q: "In both programs, sayHi() is called on line 1. Which one works?", options: ["Both of them", "Only the function declaration", "Only the one with var"], answer: 1, why: "The declaration is fully set up early. In the other, sayHi is a var, so on line 1 it is still undefined, and calling undefined fails." },
+          guess: { q: "In both programs, sayHi() is called on line 1. Which one works?", options: ["Both of them", "Only the function declaration", "Only the one with var"], answer: 1, why: "The function declaration is created with its whole body before line 1. In the other program, sayHi is a var, so on line 1 its value is still undefined. Calling undefined throws a TypeError." },
           action: { label: "Run both", icon: "play", prompt: "Press the button to run both programs.", run: (s, ctx) => s.run(ctx) },
           after: (s) => s.said() + ".",
         },
         {
-          say: "typeof does not save you in the dead zone. A class declaration is in the dead zone too, like let. Each try block below catches the error and prints its name.",
+          say: "typeof does not protect you from the TDZ. A class declaration is hoisted like let, so it is also in the TDZ until its line runs.",
           enter: (s) => { s.load(["snip:tdzTypeof", "snip:tdzClass"], false); s.picker.hidden = true; },
-          guess: { q: "Both lines use a name before its let or class line. Do they throw?", options: ["Neither: typeof is always safe", "Both throw a ReferenceError", "Only the class one"], answer: 1, why: "typeof is only safe for a name that does not exist at all. In the dead zone the name exists but is covered, so typeof throws. A class works like let here." },
+          guess: { q: "Both lines use a name before its let or class line. Do they throw?", options: ["Neither: typeof is always safe", "Both throw a ReferenceError", "Only the class one"], answer: 1, why: "typeof is only safe for a name that was never declared at all. In the TDZ the name exists but is not initialized, so even typeof throws. A class behaves like let here." },
           action: { label: "Run both", icon: "play", prompt: "Press the button to run both.", run: (s, ctx) => s.run(ctx) },
           after: (s) => s.said() + ".",
         },
@@ -269,12 +283,12 @@
           after: (s) => s.said() + ".",
         },
       ],
-      takeaway: "Before any line runs, a var is set to undefined and a function declaration is ready, but a let, const or class is in the dead zone until its line.",
+      takeaway: "Every name declared in a scope is created before the scope's first line runs. A var starts as undefined, and a function declaration starts as the whole function. A let, const or class starts without a value: it is in the TDZ until its line runs.",
       check: {
         q: "Which one throws an error when it is used before its line?",
         options: ["var", "let", "A function declaration"],
         answer: 1,
-        why: ["A var is hoisted and starts as undefined. No error.", "Yes. let (and const) are in the dead zone until their line runs.", "A function declaration is ready to use from the first line."],
+        why: ["A var is hoisted with the value undefined, so reading it early gives undefined, not an error.", "Yes. let (and const) are hoisted too, but they stay in the TDZ until their line runs.", "A function declaration is hoisted with its whole body, so you can call it from the first line."],
       },
     });
   };
@@ -287,9 +301,9 @@
     const ask = [
       null,
       { q: "a() is called a second time. What does it print?", options: [fresh[1], res.console[1], "0"], answer: 1,
-        why: `a() reads count from its parent box, which still holds ${res.console[0]}. It adds 1 and prints ${res.console[1]}. (Printing ${fresh[1]} would mean count starts again from 0 on every call. It does not: the box stays alive.)` },
+        why: `a() reads count from its parent scope, which still holds ${res.console[0]}. It adds 1 and prints ${res.console[1]}. (Printing ${fresh[1]} would mean count starts again from 0 on every call. It does not: the scope stays alive.)` },
       { q: "Now b() is called for the first time. What does it print?", options: [shared[2], res.console[2], "0"], answer: 1,
-        why: `b was made by a second call of makeCounter(), so it has its own box and its own count. It starts at 0 and prints ${res.console[2]}. (Printing ${shared[2]} would mean a and b share one box. They do not.)` },
+        why: `b was made by a second call of makeCounter(), so it has its own scope and its own count. It starts at 0 and prints ${res.console[2]}. (Printing ${shared[2]} would mean a and b share one scope. They do not.)` },
     ];
     return guided({
       title: "Your turn: what prints?",
@@ -304,7 +318,7 @@
             code.mark(f.line);
             con.set(res.console.slice(0, n));
             const nv = nestView(res, f);
-            nest.replaceChildren(h("span.label", "The boxes now"), nv.el);
+            nest.replaceChildren(h("span.label", "The scopes now"), nv.el);
           },
         };
       },
@@ -313,7 +327,7 @@
         { say: `The first call a() prints ${res.console[0]}: count starts at 0, and a adds 1.`, enter: (s) => s.state(1) },
         ...[1, 2].map((k) => ({ say: ["", "a() is called again.", "Now the other counter."][k], enter: (s) => s.state(k), guess: ask[k], after: undefined, onReveal: (s) => s.state(k + 1) })),
       ],
-      takeaway: "Each call of makeCounter() makes its own box, so each returned function has its own private count.",
+      takeaway: "Each call of makeCounter() makes its own scope, so each returned function has its own private count.",
       check: {
         q: "If makeCounter() declared count INSIDE the returned function, what would a() print the second time?",
         options: ["2", `${fresh[1]}`, "undefined"], answer: 1,
@@ -325,9 +339,9 @@
   /* ---------- 06. The three fixes (and a fix that fails), all run for real ---------- */
   V.fixes = () => {
     const fixes = [
-      { id: "loopLet", name: "Fix 1: use let", say: "Fix 1: change var to let. Every turn of the loop gets its own box, and each timer remembers its own." },
-      { id: "fixIife", name: "Fix 2: call a function each turn", say: "Fix 2: call a function on every turn and give it i. The timer then lives in that function's own box, which holds j. (This is an IIFE, a function that is called at once. It is an old trick, before let.)" },
-      { id: "fixArg", name: "Fix 3: hand i to setTimeout", say: "Fix 3: setTimeout can carry extra values. It saves the value of i at that moment and hands it to your function later." },
+      { id: "loopLet", name: "Fix 1: use let", say: "Fix 1: change var to let. Every turn of the loop gets its own scope with its own i, and each timer remembers the i of its turn." },
+      { id: "fixIife", name: "Fix 2: call a function each turn", say: "Fix 2: call a function on every turn and pass i to it. Each call gets its own scope with its own j, and the timer points to that scope. This pattern is called an IIFE (an immediately invoked function expression): a function that is called right where it is written. People used it before let existed." },
+      { id: "fixArg", name: "Fix 3: hand i to setTimeout", say: "Fix 3: setTimeout can take extra arguments after the delay. It saves the value of i at that moment and passes it to your function later." },
     ];
     return guided({
       title: "Three fixes, and one that does not work",
@@ -348,7 +362,7 @@
         return s;
       },
       steps: [
-        { say: "The bug: every callback points to the same box, where i is 3. To fix it, each callback must point to its OWN box.", enter: (s) => { s.load("loopVar"); s.picker.hidden = true; } },
+        { say: "The bug: every callback points to the same scope, where i is 3. To fix it, each callback must point to its OWN scope, with its own copy of the value.", enter: (s) => { s.load("loopVar"); s.picker.hidden = true; } },
         ...fixes.map((f) => ({
           say: f.say, enter: (s) => { s.load(f.id); s.picker.hidden = true; },
           action: { label: "Run it in this browser", icon: "play", prompt: "Press the button to run the real code.", run: (s, ctx) => s.run(ctx) },
@@ -357,7 +371,7 @@
         {
           say: "A tempting fix: copy i into another variable inside the loop, with var j = i.",
           enter: (s) => { s.load("wrongFix"); s.picker.hidden = true; },
-          guess: { q: "Does var j = i fix it?", options: ["Yes: 0, 1, 2", "No: 3, 3, 3", "No: 2, 2, 2"], answer: 2, why: "var j is also ONE variable for the whole script. Each turn overwrites it. The last turn sets j to 2, so all callbacks print 2. The copy must live in a box of its own." },
+          guess: { q: "Does var j = i fix it?", options: ["Yes: 0, 1, 2", "No: 3, 3, 3", "No: 2, 2, 2"], answer: 2, why: "var j is also ONE variable for the whole script, because var ignores the loop's { }. Each turn overwrites it. The last turn sets j to 2, so all callbacks print 2. The copy must live in a scope of its own." },
           action: { label: "Run it in this browser", icon: "play", prompt: "Press the button to run the real code.", run: (s, ctx) => s.run(ctx) },
           after: (s) => `Your browser printed: ${joinC(outLines(s.real))}.`,
         },
@@ -368,7 +382,7 @@
           after: (s) => `Your browser printed: ${joinC(outLines(s.real))}.`,
         },
       ],
-      takeaway: "To fix the loop, give each callback its own box: use let, call a function each turn (an IIFE), or hand the value to setTimeout.",
+      takeaway: "To fix the loop, give each callback its own scope: use let, call a function on each turn (an IIFE), or pass the value to setTimeout.",
       check: {
         q: "Why does var j = i inside the loop not help?",
         options: ["j is a var, so it is one variable for the whole script", "j is not declared", "setTimeout ignores j"], answer: 0,
@@ -420,7 +434,7 @@
           } },
           after: (s) => (s.real ? `Without debounce: 5 requests. With debounce: ${s.real.length}, for ${s.real.map((m) => `"${m.text}" (at ${m.at} ms)`).join(" and ")}. These times were measured with real timers just now.` : ""),
         },
-        { say: "Where is the closure? The returned function remembers one variable, timer. Each key press clears the old timer and starts a new one.", enter: (s) => { s.keys.forEach((k) => { k.c.setAttribute("opacity", 1); k.t.setAttribute("opacity", 1); }); s.raw.forEach((r) => r.c.setAttribute("opacity", 1)); s.deb.forEach((d, i) => { if (s.real && s.real[i]) { d.setAttribute("cx", s.X(s.real[i].at)); d.setAttribute("opacity", 1); } }); } },
+        { say: "Where is the closure? The function that debounce returns remembers one variable, timer. Each key press calls that function, which clears the old timer and starts a new one.", enter: (s) => { s.keys.forEach((k) => { k.c.setAttribute("opacity", 1); k.t.setAttribute("opacity", 1); }); s.raw.forEach((r) => r.c.setAttribute("opacity", 1)); s.deb.forEach((d, i) => { if (s.real && s.real[i]) { d.setAttribute("cx", s.X(s.real[i].at)); d.setAttribute("opacity", 1); } }); } },
       ],
       takeaway: "debounce keeps a timer variable in a closure: every call cancels the old timer and starts a new one, so only the last call in a burst runs.",
       check: {
@@ -459,10 +473,10 @@
           say: "Now the timer lives in one object that every render shares. In React, useRef gives you this object.",
           enter: (s) => s.load("refShared"),
           action: { label: "Run it with real timers", icon: "play", prompt: "Press the button to run the real code.", run: (s, ctx) => s.run(ctx) },
-          after: (s) => `Your browser printed: ${joinC(outLines(s.real.refShared))}. All renders clear and set the same box, so only the last search is sent.`,
+          after: (s) => `Your browser printed: ${joinC(outLines(s.real.refShared))}. Every render clears and sets the same ref object, so only the last search is sent.`,
         },
       ],
-      takeaway: "A plain variable inside a component is new on every render. A ref is one box that all renders share, so it can remember a timer.",
+      takeaway: "A plain variable inside a component is new on every render. A ref is one object that all renders share, so it can remember a timer.",
       check: {
         q: "Why does Speako's help search keep its timer in useRef?",
         options: ["So all renders share one timer to cancel", "Because refs are faster", "Because let cannot hold a number"], answer: 0,
@@ -489,7 +503,7 @@
     return cards;
   }
 
-  V.film = (ids, title = "Boxes, variables and arrows") => {
+  V.film = (ids, title = "Scopes, variables and arrows") => {
     const runs = ids.map(R);
     const plans = runs.map(plan);
     const maxLines = Math.max(...runs.map((r) => r.lines.length));
@@ -550,7 +564,7 @@
           grp.append(strip);
           const stripTexts = [];
           const stripA = Fm.actor(strip, { ver: 0 }, (p, n) => { n.textContent = stripTexts[Math.round(p.ver)] || ""; });
-          grp.append(S("text", { x: g.scene.x + 2, y: g.cardsY + sceneH - 18, class: "fl-small", style: "font-size:11px" }, "ƒ = a function. Its arrow points to the box where it was born."));
+          grp.append(S("text", { x: g.scene.x + 2, y: g.cardsY + sceneH - 18, class: "fl-small", style: "font-size:11px" }, "ƒ = a function. Its arrow points to the scope where it was created."));
 
           /* the cards */
           let y = g.cardsY;
@@ -626,7 +640,7 @@
                 const fe = f.envs[c.env.id];
                 present = Boolean(fe);
                 if (fe) {
-                  rowsNow = fe.vars.map((v) => ({ t: fit(`${v.n} = ${v.tdz ? "(dead zone)" : v.v}`, 32), tdz: v.tdz, hot: hotRows.has(`${c.env.id}:${v.n}`) }));
+                  rowsNow = fe.vars.map((v) => ({ t: fit(`${v.n} = ${v.tdz ? "(not initialized)" : v.v}`, 32), tdz: v.tdz, hot: hotRows.has(`${c.env.id}:${v.n}`) }));
                   if (!fe.dead) fe.vars.forEach((v, i) => { if (v.f && v.f.to != null && byKey["e" + v.f.to]) live.add(arrow(c, i, byKey["e" + v.f.to])); });
                 }
               }
@@ -644,7 +658,7 @@
         });
         const moral = runs.map((r) => PR[r.id].moral).filter(Boolean);
         Fm.chapter(T, "The idea");
-        Fm.say(T, moral.length ? moral[moral.length - 1] : "Each call, block and loop turn makes a box. A function remembers the box where it was born.");
+        Fm.say(T, moral.length ? moral[moral.length - 1] : "Each call, block and loop turn makes a scope. A function remembers the scope where it was created.");
         Fm.end(T + 6);
       },
     });

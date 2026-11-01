@@ -3,8 +3,10 @@
      1. real JavaScript source code (what the reader sees AND what dev/js-scope-closures.test.js runs in Node),
      2. a trace: frames with the boxes (scopes), their variables, which function points to which box, the call stack,
         the timer list, the console and a plain-English caption. The films and guided pages are drawn from the trace.
-   Model (the spec's idea, simplified): every call, block and loop turn gets a "box" (an environment). A box has a parent:
-   the box where the code was WRITTEN. A function remembers the box it was born in. A box is freed when nothing can reach it.
+   Model (the spec's idea, simplified): every call, block and loop turn gets a scope (an environment). A scope has a parent:
+   the scope where the code was WRITTEN. A function remembers the scope it was created in. A scope is freed when nothing can reach it.
+   Hoisting: when a scope starts, every name declared in it is created. var starts as undefined, a function declaration as the
+   whole function, and let/const/class start uninitialized (the TDZ) until their line runs.
    Works in the browser (Book.parts["js-scope-closures"].data) and in Node (module.exports). */
 (function (root, factory) {
   const api = factory();
@@ -151,12 +153,12 @@
       if (!h || p.terse) return "";
       const names = (a) => a.map(q).join(", ");
       const parts = [];
-      if (h.fns.length) parts.push(`the function ${names(h.fns)} ${h.fns.length > 1 ? "are" : "is"} ready to use`);
-      if (h.vars.length) parts.push(`${names(h.vars)} (a var) ${h.vars.length > 1 ? "start" : "starts"} as undefined`);
-      if (h.dead.length) parts.push(`${names(h.dead)} ${h.dead.length > 1 ? "wait" : "waits"} in the dead zone`);
+      if (h.fns.length) parts.push(`the function ${names(h.fns)} ${h.fns.length > 1 ? "are" : "is"} created with ${h.fns.length > 1 ? "their" : "its"} whole body, ready to call`);
+      if (h.vars.length) parts.push(`${names(h.vars)} (a var) ${h.vars.length > 1 ? "are" : "is"} created with the value undefined`);
+      if (h.dead.length) parts.push(`${names(h.dead)} ${h.dead.length > 1 ? "are" : "is"} ${parts.length ? "also created" : "created"}, but not initialized yet`);
       if (!parts.length) return "";
-      let t = `${when}, JavaScript sets up ${what}: ${parts.join("; ")}.`;
-      if (h.dead.length && !st.said.dead) { t += " The dead zone means: a let or const variable cannot be used before its line runs."; st.said.dead = true; }
+      let t = `${when}, JavaScript creates every name declared in ${what}: ${parts.join("; ")}.`;
+      if (h.dead.length && !st.said.dead) { t += " Until its line runs, a let or const variable is in the temporal dead zone (TDZ), and reading it throws an error."; st.said.dead = true; }
       return t;
     }
 
@@ -185,7 +187,7 @@
     const freeNote = (list) => {
       const first = !st.said.gc;
       st.said.gc = true;
-      return `Nothing points to ${list.map((e) => `the ${e.label} box`).join(" and ")} any more, so ${list.length > 1 ? "they" : "it"} can be freed${first ? " (the engine does this later; this is called garbage collection)" : ""}.`;
+      return `Nothing points to ${list.map((e) => `the ${e.label} scope`).join(" and ")} any more, so ${list.length > 1 ? "they" : "it"} can be freed${first ? " (the engine does this later; this is called garbage collection)" : ""}.`;
     };
 
     /* ---- lookups: which boxes were searched for a name ---- */
@@ -204,7 +206,7 @@
       for (const k of st.lk) if (!byName.has(k.name) || k.write) byName.set(k.name, k);
       for (const k of byName.values()) {
         if (k.path.length < 2) continue;
-        const chain = k.path.map((id) => st.envs[id]).filter((e, i) => vis(e) || i === 0).map((e) => (vis(e) ? e.label : "empty box"));
+        const chain = k.path.map((id) => st.envs[id]).filter((e, i) => vis(e) || i === 0).map((e) => (vis(e) ? e.label : "empty scope"));
         notes.push(`${k.write ? "Changing" : "Reading"} ${q(k.name)} looks outward: ${chain.join(" → ")} (found).${k.write ? " It changes the real variable." : ""}`);
       }
       return notes.slice(0, 2).join(" ");
@@ -225,7 +227,7 @@
         i: st.frames.length, group: st.group, line: line == null ? null : line, caption: text,
         stack: st.stack.map((e) => e.label), out: st.out.length, carry: o.carry || null, looks, freed: freed.map((e) => e.id),
         timers: st.timers.map((t) => ({ name: t.fn.name, to: tgt(t.fn.env), ms: t.ms, args: t.args.map(shown) })),
-        envs: st.envs.map((e) => ({ id: e.id, dead: e.dead, vars: [...e.vars].map(([n, b]) => ({ n, k: b.kind, tdz: b.tdz, v: b.tdz ? "dead zone" : shown(b.value), f: isFn(b.value) ? { to: tgt(b.value.env) } : null })) })),
+        envs: st.envs.map((e) => ({ id: e.id, dead: e.dead, vars: [...e.vars].map(([n, b]) => ({ n, k: b.kind, tdz: b.tdz, v: b.tdz ? "not initialized (TDZ)" : shown(b.value), f: isFn(b.value) ? { to: tgt(b.value.env) } : null })) })),
       });
       return freed;
     }
@@ -267,9 +269,9 @@
       st.stack.push(env);
       const born = vlabel(f.env);
       let cap = o.fire ? `Timer ${o.fire} calls its function.` : `Calling ${base}.`;
-      if (vis(env)) cap += " A new box is made.";
-      cap += ` It looks outward from the box where it was born: ${born}.`;
-      if (vis(env)) cap += " " + hoistText(env, "this box", "Before its first line runs");
+      if (vis(env)) cap += " A new scope is made for this call.";
+      cap += ` Its parent scope is the one where the function was written: ${born}.`;
+      if (vis(env)) cap += " " + hoistText(env, "this scope", "Before its first line runs");
       snap(cap, f.node.line != null ? f.node.line : st.line);
       let result, retLine = null;
       for (const s of f.node.body) {
@@ -282,7 +284,7 @@
         let end = result === undefined ? `${base} ends.` : `${base} returns ${shown(result)}.`;
         if (vis(env)) {
           const who = reach().has(env) ? keeperPhrase(env) : "";
-          if (who) end += ` Its box stays alive: ${who} still points to it.`;
+          if (who) end += ` Its scope stays alive, because ${who} still points to it.`;
         }
         snap(end, retLine != null ? retLine : st.line, { carry: isFn(result) && visUp(result.env) ? { name: result.name, to: visUp(result.env).id } : null });
       } else snap("", st.line, { optional: true });
@@ -295,7 +297,7 @@
       const e = newEnv("block", "block", parent);
       hoist(e, body, false);
       st.scopes.push(e);
-      if (intro && vis(e)) snap(`A block { } has its own box for its let and const. ${hoistText(e, "this box")}`, st.line);
+      if (intro && vis(e)) snap(`This block { } gets its own scope for its let and const variables. ${hoistText(e, "this scope")}`, st.line);
       let r;
       for (const s of body) { r = exec(s, e); if (r) break; }
       st.scopes.pop();
@@ -306,7 +308,7 @@
       if (!s.init) {
         if (s.kind === "var") return;
         env.vars.get(s.name).tdz = false;
-        snap(`${q(s.name)} is created with no value, so it is undefined.`, s.line);
+        snap(`This line runs, so ${q(s.name)} is now initialized. It has no value, so it is undefined.`, s.line);
         return;
       }
       st.made = [];
@@ -316,7 +318,7 @@
       b.tdz = false;
       b.value = v;
       const cap = isFn(v)
-        ? (s.init.t === "call" ? `${q(s.name)} now holds ${shown(v)}. It still points to the box where it was born: ${vlabel(v.env)}.` : `${q(s.name)} now holds a new function. It points to the box where it was born: ${vlabel(v.env)}.`)
+        ? (s.init.t === "call" ? `${q(s.name)} now holds ${shown(v)}. It still points to the scope where it was created: ${vlabel(v.env)}.` : `${q(s.name)} now holds a new function. It points to the scope where it was created: ${vlabel(v.env)}.`)
         : `${q(s.name)} ${s.kind === "var" ? "(a var) " : ""}gets the value ${shown(v)}.`;
       snap(cap, s.line);
     }
@@ -353,7 +355,7 @@
           st.timers.push({ fn: f, args, due: st.time + s.ms, seq: ++st.seq, ms: s.ms });
           const again = st.said.timer;
           st.said.timer = true;
-          snap((again ? `Same again: ${vlabel(f.env)}.` : `setTimeout saves ${shown(f)}. It points to the box where it was born: ${vlabel(f.env)}.`) + (args.length ? ` It also keeps the value ${args.map(shown).join(", ")}.` : ""), s.line);
+          snap((again ? `setTimeout saves one more function. It also points to the scope where it was created: ${vlabel(f.env)}.` : `setTimeout saves ${shown(f)} to run later. The function points to the scope where it was created: ${vlabel(f.env)}.`) + (args.length ? ` It also keeps the value ${args.map(shown).join(", ")}.` : ""), s.line);
           return undefined;
         }
         default: return execFor(s, env);
@@ -367,7 +369,7 @@
       let cur = env;
       let slot = -1;
       if (per) { cur = mk(startVal); turn = 1; slot = st.scopes.push(cur) - 1; } else lookup(env, s.name, true).b.value = startVal;
-      snap(per ? `The loop starts. ${q(s.kind + " " + s.name)} gets its own box. ${s.name} is ${startVal}.` : `${q("var " + s.name)} is one variable for the whole box it lives in (here: ${env.label === "global" ? "the global box" : env.label}). ${s.name} is ${startVal}.`, s.line);
+      snap(per ? `The loop starts. ${q(s.kind + " " + s.name)} gets its own scope for this turn. ${s.name} is ${startVal}.` : `${q("var " + s.name)} ignores the loop's { } and is one variable for the whole ${env.label === "global" ? "script (the global scope)" : "function " + env.label}. ${s.name} is ${startVal}.`, s.line);
       for (;;) {
         const b = per ? cur.vars.get(s.name) : lookup(env, s.name, false).b;
         const lim = ev(s.limit, env);
@@ -379,7 +381,7 @@
           cur = mk(b.value);
           cur.vars.get(s.name).value = next;
           st.scopes[slot] = cur;
-          snap(`Next turn: a NEW box, with a copy of ${s.name} plus 1. ${s.name} is now ${next}.`, s.line);
+          snap(`Next turn: JavaScript makes a NEW scope for this turn, copies ${s.name} into it, and adds 1. ${s.name} is now ${next}.`, s.line);
         } else {
           b.value = next;
           snap(`${s.name}++ changes the one variable ${q(s.name)}: it is now ${next}.`, s.line);
@@ -398,13 +400,13 @@
     let error = null;
     const errorText = (e) => {
       const m = e.message;
-      const why = /before initialization/.test(m) ? "The variable is still in the dead zone: it was used before its line ran."
-        : /is not defined/.test(m) ? "No box on the way outward has a variable with this name."
+      const why = /before initialization/.test(m) ? "The variable is still in the TDZ: it exists, but its let or const line has not run yet."
+        : /is not defined/.test(m) ? "No scope on the way outward has a variable with this name."
         : /is not a function/.test(m) ? "The name exists, but its value is not a function (here it is undefined)." : "";
       return `${e.jsName}: ${m}. ${why} The script stops here.`.replace("  ", " ");
     };
     try {
-      snap(("The script starts. " + (vis(global) ? hoistText(global, "the global box") : "")).trim(), null);
+      snap(("The script starts. " + (vis(global) ? hoistText(global, "the global scope") : "")).trim(), null);
       p.ops.forEach((s, k) => {
         st.group = { id: k + 1, title: (gen.lines[s.line] || "").trim().slice(0, 46) };
         exec(s, global);
@@ -454,43 +456,37 @@
   const arrowLog = (name) => F([], [Log(I(name))], { arrow: true, concise: true });
   const programs = {
     counter: { id: "counter", title: "A counter", terse: true, ops: [makeCounter(), Const("next", C(I("makeCounter"))), Log(C(I("next"))), Log(C(I("next")))],
-      chapters: [[(f) => f.i === 0, "makeCounter() runs"], [(f) => /^makeCounter\(\) returns/.test(f.caption), "The box stays alive"], [(f) => f.group.id === 3, "next() twice"]],
-      moral: "A closure is a function plus the box it was born in. The box lives as long as the function can be reached." },
+      chapters: [[(f) => f.i === 0, "makeCounter() runs"], [(f) => /^makeCounter\(\) returns/.test(f.caption), "The scope stays alive"], [(f) => f.group.id === 3, "next() twice"]],
+      moral: "A closure is a function plus the scope it was created in. The scope stays alive as long as the function can be reached." },
     twoCounters: { id: "twoCounters", title: "Two counters", ops: [makeCounter(), Const("a", C(I("makeCounter"))), Const("b", C(I("makeCounter"))), Log(C(I("a"))), Log(C(I("a"))), Log(C(I("b")))] },
     sharedCounters: { id: "sharedCounters", title: "Two names, one counter", ops: [makeCounter(), Const("a", C(I("makeCounter"))), Const("b", I("a")), Log(C(I("a"))), Log(C(I("a"))), Log(C(I("b")))] },
     freshCounters: { id: "freshCounters", title: "A counter with no memory", ops: [FD("makeCounter", [], [Ret(F([], [Let("count", N(0)), As("count", B("+", I("count"), N(1))), Ret(I("count"))]))]), Const("a", C(I("makeCounter"))), Const("b", C(I("makeCounter"))), Log(C(I("a"))), Log(C(I("a"))), Log(C(I("b")))] },
-    chain: { id: "chain", title: "Boxes inside boxes", ops: [Const("a", S("global")), FD("outer", [], [Const("b", S("outer")), FD("inner", [], [Const("c", S("inner")), Log(I("a"), I("b"), I("c"))]), Ex(C(I("inner")))]), Ex(C(I("outer")))] },
-    shadow: { id: "shadow", title: "Same name, two boxes", ops: [Const("x", S("global")), FD("show", [], [Const("x", S("local")), Log(I("x"))]), Ex(C(I("show"))), Log(I("x"))] },
-    hoistVar: { id: "hoistVar", title: "Use a var early", ops: [Log(I("a")), Var("a", N(5))] },
-    hoistLet: { id: "hoistLet", title: "Use a let early", ops: [Log(I("a")), Let("a", N(5))] },
+    chain: { id: "chain", title: "Scopes inside scopes", ops: [Const("a", S("global")), FD("outer", [], [Const("b", S("outer")), FD("inner", [], [Const("c", S("inner")), Log(I("a"), I("b"), I("c"))]), Ex(C(I("inner")))]), Ex(C(I("outer")))] },
+    shadow: { id: "shadow", title: "Same name in two scopes", ops: [Const("x", S("global")), FD("show", [], [Const("x", S("local")), Log(I("x"))]), Ex(C(I("show"))), Log(I("x"))] },
+    hoistVar: { id: "hoistVar", title: "Read a var before its line", ops: [Log(I("a")), Var("a", N(5))] },
+    hoistLet: { id: "hoistLet", title: "Read a let before its line", ops: [Log(I("a")), Let("a", N(5))] },
     fnDecl: { id: "fnDecl", title: "Call a function declaration early", ops: [Ex(C(I("sayHi"))), FD("sayHi", [], [Log(S("hi"))])] },
-    fnExpr: { id: "fnExpr", title: "Call a function expression early", ops: [Ex(C(I("sayHi"))), Var("sayHi", F([], [Log(S("hi"))]))] },
+    fnExpr: { id: "fnExpr", title: "Call a function stored in a var early", ops: [Ex(C(I("sayHi"))), Var("sayHi", F([], [Log(S("hi"))]))] },
     loopVar: { id: "loopVar", title: "A loop with var", terse: true, ops: [For("var", "i", N(0), N(3), Timeout(arrowLog("i"), 0))],
       chapters: [[(f) => f.i === 0, "var: the loop runs"], [(f) => f.group.id >= 999, "var: the callbacks run"]],
-      moral: "With var there is ONE i for the whole loop. All three callbacks point to the same box, and by the time they run, i is 3." },
+      moral: "With var there is ONE i for the whole loop. All three callbacks point to the same scope, and by the time they run, i is 3." },
     loopLet: { id: "loopLet", title: "A loop with let", terse: true, ops: [For("let", "i", N(0), N(3), Timeout(arrowLog("i"), 0))],
       chapters: [[(f) => f.i === 0, "let: the loop runs"], [(f) => f.group.id >= 999, "let: the callbacks run"]],
-      moral: "With let, every turn gets its own box. Each callback points to its own box, so each one remembers its own i." },
+      moral: "With let, every turn of the loop gets its own scope. Each callback points to its own scope, so each one remembers its own i." },
     wrongFix: { id: "wrongFix", title: "A fix that does not work", ops: [For("var", "i", N(0), N(3), Var("j", I("i")), Timeout(arrowLog("j"), 0))] },
     fixIife: { id: "fixIife", title: "Fix: a function call for each turn", ops: [For("var", "i", N(0), N(3), Ex(C(F(["j"], [Timeout(arrowLog("j"), 0)]), [I("i")])))] },
     fixArg: { id: "fixArg", title: "Fix: hand i to setTimeout", ops: [For("var", "i", N(0), N(3), Timeout(F(["n"], [Log(I("n"))]), 0, I("i")))] },
     stale: { id: "stale", title: "A stale closure", terse: true, chapters: [[(f) => f.i === 0, "Three renders"], [(f) => f.group.id === 6, "The old handler runs"]], ops: [Let("handler"), FD("render", ["count"], [If(B("===", I("handler"), U()), As("handler", F([], [Log(I("count"))])))]), Ex(C(I("render"), [N(0)])), Ex(C(I("render"), [N(1)])), Ex(C(I("render"), [N(2)])), Ex(C(I("handler")))],
-      moral: "The saved function still reads count from the first render's box. Newer renders made newer boxes, but nobody asked this function to look there." },
+      moral: "The saved function still reads count from the first render's scope. Newer renders made newer scopes, but this old function never looks there." },
     staleFixed: { id: "staleFixed", title: "A fresh closure each render", terse: true, chapters: [[(f) => f.i === 0, "The fix: a new handler each render"], [(f) => f.group.id === 6, "The new handler runs"]], ops: [Let("handler"), FD("render", ["count"], [As("handler", F([], [Log(I("count"))]))]), Ex(C(I("render"), [N(0)])), Ex(C(I("render"), [N(1)])), Ex(C(I("render"), [N(2)])), Ex(C(I("handler")))],
-      moral: "Make a new function on every render, and it points to the newest box. (In React: put count in the dependency array.)" },
+      moral: "Make a new function on every render, and it points to the newest scope. (In React, you do this by putting count in the dependency array.)" },
   };
   /* The questions in the lesson come from these variants: what a wrong mental model would print. */
   const EXPECT = { counter: ["1", "2"], twoCounters: ["1", "2", "1"], sharedCounters: ["1", "2", "3"], freshCounters: ["1", "1", "1"], chain: ["global outer inner"], shadow: ["local", "global"], hoistVar: ["undefined"], fnDecl: ["hi"], loopVar: ["3", "3", "3"], loopLet: ["0", "1", "2"], wrongFix: ["2", "2", "2"], fixIife: ["0", "1", "2"], fixArg: ["0", "1", "2"], stale: ["0"], staleFixed: ["2"] };
 
   /* ---------- 6. Closures in practice: once, memoize, debounce, curry (reference solutions + harnesses) ---------- */
+    /* The typing on the debounce timeline (real timers, small times). */
   const TYPING = { wait: 100, keys: [["h", 0], ["he", 30], ["hel", 60], ["hell", 90], ["hello", 330]], settle: 560 };
-  const typingHarness = (name) => `// --- the simulated typing (real timers, small times). Don't edit below.
-const sent = [];
-const t0 = performance.now();
-const search = ${name}((text) => sent.push({ text, at: Math.round(performance.now() - t0) }), ${TYPING.wait});
-for (const [text, at] of ${JSON.stringify(TYPING.keys)}) setTimeout(() => search(text), at);
-await new Promise((resolve) => setTimeout(resolve, ${TYPING.settle}));
-report("debounce", { sent, typed: ${TYPING.keys.length}, wait: ${TYPING.wait} });`;
   const LIB = {
     once: {
       head: "function once(fn) {\n  let called = false;\n  let result;\n  return function (...args) {\n",
@@ -527,15 +523,27 @@ report("memoize", { calls, out, zeroCalls });`,
       ],
     },
     debounce: {
-      head: "function debounce(fn, wait) {\n  let timer;\n  return function debounced(...args) {\n",
-      todo: "    // TODO: cancel the old timer, then start a new one that calls fn after wait ms.\n",
-      body: "    clearTimeout(timer);\n    timer = setTimeout(() => fn.apply(this, args), wait);\n",
+      head: "function debounce(fn, wait) {\n  let timer;\n  return function (...args) {\n",
+      todo: "    // TODO: cancel the old timer with clearTimeout(timer).\n    // Then start a new timer that calls fn(...args) after wait ms.\n",
+      body: "    clearTimeout(timer);\n    timer = setTimeout(() => fn(...args), wait);\n",
       tail: "  };\n}\n",
-      harness: typingHarness("debounce"),
+      harness: `// --- The test. You don't need to change anything below this line.
+const pause = (ms) => new Promise((done) => setTimeout(done, ms)); // waits ms milliseconds
+const sent = []; // every search that really runs is saved here
+const search = debounce((text) => sent.push(text), 100);
+
+search("h");     // The user types four letters quickly.
+search("he");    // Each call comes before the 100 ms are over,
+search("hel");   // so it should cancel the call before it.
+search("hell");
+await pause(200); // The user stops typing for 200 ms.
+search("hello");
+await pause(200);
+
+report("debounce", { sent });`,
       checks: (r) => [
-        { label: "only 2 requests are sent", ok: r.sent.length === 2, got: `${r.sent.length} sent` },
-        { label: "the texts are \"hell\" and \"hello\"", ok: JSON.stringify(r.sent.map((s) => s.text)) === JSON.stringify(["hell", "hello"]), got: JSON.stringify(r.sent.map((s) => s.text)) },
-        { label: "each one waited the full pause", ok: r.sent.length === 2 && r.sent[0].at >= 150 && r.sent[1].at >= 400, got: r.sent.map((s) => s.at + " ms").join(", ") || "none" },
+        { label: "only 2 searches are sent", ok: r.sent.length === 2, got: `${r.sent.length} sent` },
+        { label: "the searches are \"hell\" and \"hello\"", ok: JSON.stringify(r.sent) === JSON.stringify(["hell", "hello"]), got: JSON.stringify(r.sent) },
       ],
     },
     curry: {
@@ -593,15 +601,18 @@ report("curry", { all: attempt(() => add(1, 2, 3)), one: attempt(() => add(1)(2)
     trackLogs: { code: "function trackLogs() {\n  const history = [];\n  const original = console.log;\n  console.log = (...args) => {\n    history.push(args.join(\" \"));\n    original(...args);\n  };\n  return () => history.slice();\n}\nconst getHistory = trackLogs();\nconsole.log(\"a\");\nconsole.log(\"b\", \"c\");\nconsole.log(getHistory().length);", out: ["a", "b c", "2"] },
     debounce2: { code: "function debounce(fn, wait) {\n  let timer;\n  let lastArgs;\n  let lastThis;\n  function debounced(...args) {\n    lastArgs = args;\n    lastThis = this;\n    clearTimeout(timer);\n    timer = setTimeout(() => { timer = undefined; fn.apply(this, args); }, wait);\n  }\n  debounced.cancel = () => { clearTimeout(timer); timer = undefined; };\n  debounced.flush = () => {\n    if (timer === undefined) return;\n    clearTimeout(timer);\n    timer = undefined;\n    fn.apply(lastThis, lastArgs);\n  };\n  return debounced;\n}\nconst send = debounce((x) => console.log(\"sent\", x), 50);\nsend(\"a\");\nsend(\"b\");\nsend.flush();\nsend(\"c\");\nsend.cancel();", out: ["sent b"], wait: 150 },
     fnLength: { code: "console.log(((a, b) => 0).length);\nconsole.log(((a, b = 1) => 0).length);\nconsole.log(((...rest) => 0).length);", out: ["2", "1", "0"] },
-    tdzTypeof: { code: "try { typeof x; } catch (e) { console.log(e.name); }\nlet x = 1;", out: ["ReferenceError"] },
-    tdzClass: { code: "try { new C(); } catch (e) { console.log(e.name); }\nclass C {}", out: ["ReferenceError"] },
+    tdzTypeof: { code: "console.log(typeof x);\nlet x = 1;", error: "ReferenceError", text: /before initialization/ },
+    tdzClass: { code: "new Car();\nclass Car {}", error: "ReferenceError", text: /before initialization/ },
+    tdzBlock: { code: "let x = \"outer\";\n{\n  console.log(x); // which x is this?\n  let x = \"inner\";\n}", error: "ReferenceError", text: /before initialization/ },
+    tdzTimeEarly: { code: "function show() {\n  return x;\n}\nshow(); // called BEFORE let x runs\nlet x = 1;", error: "ReferenceError", text: /before initialization/ },
+    tdzTimeLate: { code: "function show() {\n  return x;\n}\nlet x = 1;\nconsole.log(show()); // AFTER let x ran", out: ["1"] },
     thisDebounce: { code: "function debounce(fn, wait) {\n  let timer;\n  return function debounced(...args) {\n    clearTimeout(timer);\n    timer = setTimeout(() => fn.apply(this, args), wait);\n  };\n}\nconst search = {\n  prefix: \"q=\",\n  send: debounce(function (text) { console.log(this.prefix + text); }, 20),\n};\nsearch.send(\"hi\");", out: ["q=hi"], wait: 80 },
     moduleBank: { code: "const bank = (() => {\n  let balance = 0;\n  return {\n    deposit(n) { balance += n; return balance; },\n    get balance() { return balance; },\n  };\n})();\nconsole.log(bank.deposit(50));\nconsole.log(bank.balance);\nconsole.log(typeof balance);", out: ["50", "50", "undefined"] },
     iterator: { code: "function range(n) {\n  let i = 0;\n  return {\n    next() { return i < n ? { value: i++, done: false } : { done: true }; },\n  };\n}\nconst it = range(2);\nconsole.log(it.next().value, it.next().value, it.next().done);", out: ["0 1 true"] },
     generator: { code: "function* range(n) {\n  for (let i = 0; i < n; i++) yield i;\n}\nconsole.log(Array.from(range(3)).join(\",\"));", out: ["0,1,2"] },
     later: { code: "function later(message, ms) {\n  setTimeout(() => console.log(message), ms);\n}\nlater(\"second\", 40);\nlater(\"first\", 10);", out: ["first", "second"], wait: 90 },
     refPlain: { code: "const sent = [];\nfunction render() {\n  let timer; // a NEW variable on every render\n  return (text) => {\n    clearTimeout(timer);\n    timer = setTimeout(() => sent.push(text), 60);\n  };\n}\nfor (const text of [\"h\", \"he\", \"hel\"]) {\n  const handleSearch = render(); // each key press renders again\n  handleSearch(text);\n  await new Promise((r) => setTimeout(r, 15));\n}\nawait new Promise((r) => setTimeout(r, 120));\nconsole.log(sent.join(\", \"));", out: ["h, he, hel"], async: true },
-    refShared: { code: "const sent = [];\nconst ref = { current: undefined }; // one box shared by every render (like useRef)\nfunction render() {\n  return (text) => {\n    clearTimeout(ref.current);\n    ref.current = setTimeout(() => sent.push(text), 60);\n  };\n}\nfor (const text of [\"h\", \"he\", \"hel\"]) {\n  const handleSearch = render(); // each key press renders again\n  handleSearch(text);\n  await new Promise((r) => setTimeout(r, 15));\n}\nawait new Promise((r) => setTimeout(r, 120));\nconsole.log(sent.join(\", \"));", out: ["hel"], async: true },
+    refShared: { code: "const sent = [];\nconst ref = { current: undefined }; // one object shared by every render (like useRef)\nfunction render() {\n  return (text) => {\n    clearTimeout(ref.current);\n    ref.current = setTimeout(() => sent.push(text), 60);\n  };\n}\nfor (const text of [\"h\", \"he\", \"hel\"]) {\n  const handleSearch = render(); // each key press renders again\n  handleSearch(text);\n  await new Promise((r) => setTimeout(r, 15));\n}\nawait new Promise((r) => setTimeout(r, 120));\nconsole.log(sent.join(\", \"));", out: ["hel"], async: true },
   };
   async function runSnippet(sn) {
     if (sn.async) {
